@@ -1,0 +1,892 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:elevation="0dp"
+    app:cardCornerRadius="16dp"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toTopOf="parent">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/fonDialogFilter">
+
+        <!-- Заголовок -->
+        <LinearLayout
+            android:id="@+id/linearLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="32dp"
+            android:layout_marginTop="32dp"
+            android:layout_marginEnd="32dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <ImageView
+                android:id="@+id/imageView2"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                app:srcCompat="@drawable/max_icon" /> <!-- замените на иконку MAX -->
+
+            <TextView
+                android:id="@+id/dialog_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingStart="8dp"
+                android:text="Конфигурация фильтра"
+                android:textColor="@color/titleFilter"
+                android:textSize="16sp" />
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="19dp"
+            android:layout_marginEnd="16dp"
+            android:background="@color/lineFilter"
+            app:layout_constraintTop_toBottomOf="@+id/linearLayout" />
+
+        <!-- Имя фильтра -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/textInputLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="24dp"
+            android:layout_marginTop="32dp"
+            android:layout_marginEnd="24dp"
+            android:hint="Имя фильтра"
+            android:textColorHint="@color/textHintFilter"
+            app:boxBackgroundColor="@color/fonDialogFilter"
+            app:boxBackgroundMode="outline"
+            app:boxCornerRadiusBottomEnd="4dp"
+            app:boxCornerRadiusBottomStart="4dp"
+            app:boxCornerRadiusTopEnd="4dp"
+            app:boxCornerRadiusTopStart="4dp"
+            app:boxStrokeColor="@color/boxStrokeFilter"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/linearLayout">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/nameFilterEditText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@null"
+                android:inputType="text"
+                android:padding="16dp"
+                android:textColor="@color/textInputFilter" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <TextView
+            android:id="@+id/nameFilterTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_marginBottom="-15dp"
+            android:background="@color/fonDialogFilter"
+            android:paddingStart="4dp"
+            android:paddingEnd="4dp"
+            android:text="Название нового фильтра"
+            android:textColor="@color/frameTextFilter"
+            android:textSize="11sp"
+            app:layout_constraintBottom_toTopOf="@+id/textInputLayout"
+            app:layout_constraintStart_toStartOf="@+id/textInputLayout" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="19dp"
+            android:layout_marginEnd="16dp"
+            android:background="@color/lineFilter"
+            app:layout_constraintTop_toBottomOf="@+id/textInputLayout" />
+
+        <!-- MAX Chat ID (вместо ID пользователя Telegram) -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/textInputLayoutChatId"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="24dp"
+            android:layout_marginTop="32dp"
+            android:layout_marginEnd="24dp"
+            android:hint="MAX ID чата"
+            android:textColorHint="@color/textHintFilter"
+            app:boxBackgroundColor="@color/fonDialogFilter"
+            app:boxBackgroundMode="outline"
+            app:boxCornerRadiusBottomEnd="4dp"
+            app:boxCornerRadiusBottomStart="4dp"
+            app:boxCornerRadiusTopEnd="4dp"
+            app:boxCornerRadiusTopStart="4dp"
+            app:boxStrokeColor="@color/boxStrokeFilter"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/textInputLayout">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/maxChatIdEditText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@null"
+                android:inputType="text"
+                android:padding="16dp"
+                android:textColor="@color/textInputFilter" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <TextView
+            android:id="@+id/maxChatIdTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_marginBottom="-15dp"
+            android:background="@color/fonDialogFilter"
+            android:paddingStart="4dp"
+            android:paddingEnd="4dp"
+            android:text="ID чата в MAX (получатель сообщений)"
+            android:textColor="@color/frameTextFilter"
+            android:textSize="11sp"
+            app:layout_constraintBottom_toTopOf="@+id/textInputLayoutChatId"
+            app:layout_constraintStart_toStartOf="@+id/textInputLayoutChatId" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="19dp"
+            android:layout_marginEnd="16dp"
+            android:background="@color/lineFilter"
+            app:layout_constraintTop_toBottomOf="@+id/textInputLayoutChatId" />
+
+        <!-- ID Instance (GREEN-API) -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/textInputLayoutIdInstance"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="24dp"
+            android:layout_marginTop="32dp"
+            android:layout_marginEnd="24dp"
+            android:hint="ID Instance (GREEN-API)"
+            android:textColorHint="@color/textHintFilter"
+            app:boxBackgroundColor="@color/fonDialogFilter"
+            app:boxBackgroundMode="outline"
+            app:boxCornerRadiusBottomEnd="4dp"
+            app:boxCornerRadiusBottomStart="4dp"
+            app:boxCornerRadiusTopEnd="4dp"
+            app:boxCornerRadiusTopStart="4dp"
+            app:boxStrokeColor="@color/boxStrokeFilter"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/textInputLayoutChatId">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/maxIdInstanceEditText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@null"
+                android:inputType="text"
+                android:padding="16dp"
+                android:textColor="@color/textInputFilter" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <TextView
+            android:id="@+id/maxIdInstanceTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_marginBottom="-15dp"
+            android:background="@color/fonDialogFilter"
+            android:paddingStart="4dp"
+            android:paddingEnd="4dp"
+            android:text="ID Instance из личного кабинета GREEN-API"
+            android:textColor="@color/frameTextFilter"
+            android:textSize="11sp"
+            app:layout_constraintBottom_toTopOf="@+id/textInputLayoutIdInstance"
+            app:layout_constraintStart_toStartOf="@+id/textInputLayoutIdInstance" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="19dp"
+            android:layout_marginEnd="16dp"
+            android:background="@color/lineFilter"
+            app:layout_constraintTop_toBottomOf="@+id/textInputLayoutIdInstance" />
+
+        <!-- API Token (GREEN-API) -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/textInputLayoutApiToken"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="24dp"
+            android:layout_marginTop="32dp"
+            android:layout_marginEnd="24dp"
+            android:hint="API Token (GREEN-API)"
+            android:textColorHint="@color/textHintFilter"
+            app:boxBackgroundColor="@color/fonDialogFilter"
+            app:boxBackgroundMode="outline"
+            app:boxCornerRadiusBottomEnd="4dp"
+            app:boxCornerRadiusBottomStart="4dp"
+            app:boxCornerRadiusTopEnd="4dp"
+            app:boxCornerRadiusTopStart="4dp"
+            app:boxStrokeColor="@color/boxStrokeFilter"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/textInputLayoutIdInstance">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/maxApiTokenEditText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@null"
+                android:inputType="text"
+                android:padding="16dp"
+                android:textColor="@color/textInputFilter" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <TextView
+            android:id="@+id/maxApiTokenTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_marginBottom="-15dp"
+            android:background="@color/fonDialogFilter"
+            android:paddingStart="4dp"
+            android:paddingEnd="4dp"
+            android:text="API Token из личного кабинета GREEN-API"
+            android:textColor="@color/frameTextFilter"
+            android:textSize="11sp"
+            app:layout_constraintBottom_toTopOf="@+id/textInputLayoutApiToken"
+            app:layout_constraintStart_toStartOf="@+id/textInputLayoutApiToken" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="19dp"
+            android:layout_marginEnd="16dp"
+            android:background="@color/lineFilter"
+            app:layout_constraintTop_toBottomOf="@+id/textInputLayoutApiToken" />
+
+        <!-- Переключатель для выбора контактов -->
+        <com.google.android.material.switchmaterial.SwitchMaterial
+            android:id="@+id/switch_contact"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="32dp"
+            android:layout_marginTop="19dp"
+            android:layout_marginEnd="32dp"
+            android:text="Ввести номер вручную"
+            android:textColor="@color/textSwitchFilter"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/textInputLayoutApiToken"
+            app:thumbTint="@color/switch_thumb_color"
+            app:trackTint="@color/switch_track_color" />
+
+        <!-- Поле для ручного ввода номера -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/textInputLayout4"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="24dp"
+            android:layout_marginTop="0dp"
+            android:layout_marginEnd="24dp"
+            android:hint="Номер телефона"
+            android:textColorHint="@color/textHintFilter"
+            app:boxBackgroundColor="@color/fonDialogFilter"
+            app:boxBackgroundMode="outline"
+            app:boxCornerRadiusBottomEnd="4dp"
+            app:boxCornerRadiusBottomStart="4dp"
+            app:boxCornerRadiusTopEnd="4dp"
+            app:boxCornerRadiusTopStart="4dp"
+            app:boxStrokeColor="@color/boxStrokeFilter"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/switch_contact">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/phoneNumberEditText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@null"
+                android:inputType="text"
+                android:padding="16dp"
+                android:textColor="@color/textInputFilter" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Карточка для выбора контактов -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/card_contact"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:clickable="true"
+            android:elevation="8dp"
+            android:focusable="true"
+            android:gravity="center"
+            android:stateListAnimator="@animator/card_animator"
+            app:cardBackgroundColor="@color/fonDialogFilter"
+            app:cardCornerRadius="8dp"
+            app:layout_constraintBottom_toBottomOf="@+id/textInputLayout4"
+            app:layout_constraintStart_toStartOf="@+id/textInputLayout4">
+
+            <TextView
+                android:id="@+id/button_contact"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@color/buttonBackgroundFilter"
+                android:clickable="false"
+                android:focusable="false"
+                android:padding="10dp"
+                android:paddingStart="32dp"
+                android:paddingEnd="32dp"
+                android:text="Открыть контакты"
+                android:textColor="@color/white"
+                android:textSize="16sp" />
+        </androidx.cardview.widget.CardView>
+
+        <TextView
+            android:id="@+id/phoneNumberTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_marginBottom="-15dp"
+            android:background="@color/fonDialogFilter"
+            android:paddingStart="4dp"
+            android:paddingEnd="4dp"
+            android:text="Перехват СМС с номера"
+            android:textColor="@color/frameTextFilter"
+            android:textSize="11sp"
+            app:layout_constraintBottom_toTopOf="@+id/textInputLayout4"
+            app:layout_constraintStart_toStartOf="@+id/textInputLayout4" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="19dp"
+            android:layout_marginEnd="16dp"
+            android:background="@color/lineFilter"
+            app:layout_constraintTop_toBottomOf="@+id/textInputLayout4" />
+
+        <!-- Кнопки Отмена/Сохранить -->
+        <LinearLayout
+            android:id="@+id/linearLayout3"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="24dp"
+            android:layout_marginTop="32dp"
+            android:layout_marginEnd="16dp"
+            android:orientation="horizontal"
+            android:paddingBottom="24dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/textInputLayout4">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1" />
+
+            <TextView
+                android:id="@+id/button_no"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:layout_weight="1"
+                android:gravity="center_horizontal"
+                android:padding="8dp"
+                android:text="Отмена"
+                android:textColor="@color/textButtonFilter" />
+
+            <TextView
+                android:id="@+id/button_yes"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="0dp"
+                android:layout_weight="1"
+                android:gravity="center_horizontal"
+                android:padding="8dp"
+                android:text="Сохранить"
+                android:textColor="@color/textButtonFilter" />
+
+        </LinearLayout>
+
+        <!-- Кнопка Manual -->
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/manualIcon"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginBottom="24dp"
+            app:srcCompat="@drawable/outline_menu_book_24"
+            app:cardCornerRadius="0dp"
+            android:elevation="0dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground"
+            app:layout_constraintBottom_toBottomOf="@+id/linearLayout3"
+            app:layout_constraintStart_toStartOf="@+id/linearLayout3"
+            app:layout_constraintTop_toTopOf="@+id/linearLayout3" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</androidx.cardview.widget.CardView>
+
+
+
+
+<!--<?xml version="1.0" encoding="utf-8"?>-->
+<!--<androidx.cardview.widget.CardView-->
+<!--    xmlns:android="http://schemas.android.com/apk/res/android"-->
+<!--    xmlns:app="http://schemas.android.com/apk/res-auto"-->
+<!--    xmlns:tools="http://schemas.android.com/tools"-->
+<!--    android:layout_width="match_parent"-->
+<!--    android:layout_height="wrap_content"-->
+<!--    android:elevation="0dp"-->
+<!--    app:cardCornerRadius="16dp"-->
+<!--    app:layout_constraintBottom_toBottomOf="parent"-->
+<!--    app:layout_constraintEnd_toEndOf="parent"-->
+<!--    app:layout_constraintStart_toStartOf="parent"-->
+<!--    app:layout_constraintTop_toTopOf="parent">-->
+
+<!--    <androidx.constraintlayout.widget.ConstraintLayout-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:background="@color/fonDialogFilter">-->
+<!--        &lt;!&ndash;        android:background="@color/white">&ndash;&gt;-->
+
+<!--        <LinearLayout-->
+<!--            android:id="@+id/linearLayout"-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_marginStart="32dp"-->
+<!--            android:layout_marginTop="32dp"-->
+<!--            android:layout_marginEnd="32dp"-->
+<!--            android:gravity="center_vertical"-->
+<!--            android:orientation="horizontal"-->
+<!--            app:layout_constraintEnd_toEndOf="parent"-->
+<!--            app:layout_constraintStart_toStartOf="parent"-->
+<!--            app:layout_constraintTop_toTopOf="parent">-->
+<!--            &lt;!&ndash;        android:paddingStart="16dp"&ndash;&gt;-->
+
+<!--            <ImageView-->
+<!--                android:id="@+id/imageView2"-->
+<!--                android:layout_width="32dp"-->
+<!--                android:layout_height="32dp"-->
+<!--                app:srcCompat="@drawable/telegram" />-->
+
+<!--            <TextView-->
+<!--                android:id="@+id/dialog_title"-->
+<!--                android:layout_width="wrap_content"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:paddingStart="8dp"-->
+<!--                android:text="Конфигурация фильтра"-->
+<!--                android:textColor="@color/titleFilter"-->
+<!--                android:textSize="16sp" />-->
+<!--            &lt;!&ndash;            android:textStyle="bold"/>&ndash;&gt;-->
+<!--        </LinearLayout>-->
+
+<!--        <View-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="1dp"-->
+<!--            android:layout_marginStart="16dp"-->
+<!--            android:layout_marginTop="19dp"-->
+<!--            android:layout_marginEnd="16dp"-->
+<!--            android:background="@color/lineFilter"-->
+<!--            app:layout_constraintTop_toBottomOf="@+id/linearLayout"-->
+<!--            tools:layout_editor_absoluteX="0dp" />-->
+
+<!--        <com.google.android.material.textfield.TextInputLayout-->
+<!--            android:id="@+id/textInputLayout"-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_marginStart="24dp"-->
+<!--            android:layout_marginTop="32dp"-->
+<!--            android:layout_marginEnd="24dp"-->
+<!--            android:hint="Имя фильтра"-->
+<!--            android:textColorHint="@color/textHintFilter"-->
+<!--            app:boxBackgroundColor="@color/fonDialogFilter"-->
+<!--            app:boxBackgroundMode="outline"-->
+<!--            app:boxCornerRadiusBottomEnd="4dp"-->
+<!--            app:boxCornerRadiusBottomStart="4dp"-->
+<!--            app:boxCornerRadiusTopEnd="4dp"-->
+<!--            app:boxCornerRadiusTopStart="4dp"-->
+<!--            app:boxStrokeColor="@color/boxStrokeFilter"-->
+<!--            app:layout_constraintEnd_toEndOf="parent"-->
+<!--            app:layout_constraintStart_toStartOf="parent"-->
+<!--            app:layout_constraintTop_toBottomOf="@+id/linearLayout">-->
+
+<!--            <com.google.android.material.textfield.TextInputEditText-->
+<!--                android:id="@+id/nameFilterEditText"-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:background="@null"-->
+<!--                android:inputType="text"-->
+<!--                android:padding="16dp"-->
+<!--                android:textColor="@color/textInputFilter" />-->
+<!--        </com.google.android.material.textfield.TextInputLayout>-->
+
+<!--        <TextView-->
+<!--            android:id="@+id/nameFilterTextView"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_marginStart="12dp"-->
+<!--            android:layout_marginBottom="-15dp"-->
+<!--            android:background="@color/fonDialogFilter"-->
+<!--            android:paddingStart="4dp"-->
+<!--            android:paddingEnd="4dp"-->
+<!--            android:text="Название нового фильтра"-->
+<!--            android:textColor="@color/frameTextFilter"-->
+<!--            android:textSize="11sp"-->
+<!--            app:layout_constraintBottom_toTopOf="@+id/textInputLayout"-->
+<!--            app:layout_constraintStart_toStartOf="@+id/textInputLayout" />-->
+
+<!--        <View-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="1dp"-->
+<!--            android:layout_marginStart="16dp"-->
+<!--            android:layout_marginTop="19dp"-->
+<!--            android:layout_marginEnd="16dp"-->
+<!--            android:background="@color/lineFilter"-->
+<!--            app:layout_constraintTop_toBottomOf="@+id/textInputLayout"-->
+<!--            tools:layout_editor_absoluteX="0dp" />-->
+
+<!--        <com.google.android.material.textfield.TextInputLayout-->
+<!--            android:id="@+id/textInputLayout2"-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_marginStart="24dp"-->
+<!--            android:layout_marginTop="32dp"-->
+<!--            android:layout_marginEnd="24dp"-->
+<!--            android:hint="ID пользователя или группы"-->
+<!--            android:textColorHint="@color/textHintFilter"-->
+<!--            app:boxBackgroundColor="@color/fonDialogFilter"-->
+<!--            app:boxBackgroundMode="outline"-->
+<!--            app:boxCornerRadiusBottomEnd="4dp"-->
+<!--            app:boxCornerRadiusBottomStart="4dp"-->
+<!--            app:boxCornerRadiusTopEnd="4dp"-->
+<!--            app:boxCornerRadiusTopStart="4dp"-->
+<!--            app:boxStrokeColor="@color/boxStrokeFilter"-->
+<!--            app:layout_constraintEnd_toEndOf="parent"-->
+<!--            app:layout_constraintStart_toStartOf="parent"-->
+<!--            app:layout_constraintTop_toBottomOf="@+id/textInputLayout">-->
+
+<!--            <com.google.android.material.textfield.TextInputEditText-->
+<!--                android:id="@+id/idUserEditText"-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:background="@null"-->
+<!--                android:inputType="text"-->
+<!--                android:padding="16dp"-->
+<!--                android:textColor="@color/textInputFilter" />-->
+<!--        </com.google.android.material.textfield.TextInputLayout>-->
+
+<!--        <TextView-->
+<!--            android:id="@+id/idUserTextView"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_marginStart="12dp"-->
+<!--            android:layout_marginBottom="-15dp"-->
+<!--            android:background="@color/fonDialogFilter"-->
+<!--            android:paddingStart="4dp"-->
+<!--            android:paddingEnd="4dp"-->
+<!--            android:text="Получатель копии СМС в MAX"-->
+<!--            android:textColor="@color/frameTextFilter"-->
+<!--            android:textSize="11sp"-->
+<!--            app:layout_constraintBottom_toTopOf="@+id/textInputLayout2"-->
+<!--            app:layout_constraintStart_toStartOf="@+id/textInputLayout2" />-->
+
+<!--        <View-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="1dp"-->
+<!--            android:layout_marginStart="16dp"-->
+<!--            android:layout_marginTop="19dp"-->
+<!--            android:layout_marginEnd="16dp"-->
+<!--            android:background="@color/lineFilter"-->
+<!--            app:layout_constraintTop_toBottomOf="@+id/textInputLayout2"-->
+<!--            tools:layout_editor_absoluteX="0dp" />-->
+
+<!--        &lt;!&ndash;    <Switch&ndash;&gt;-->
+<!--        <com.google.android.material.switchmaterial.SwitchMaterial-->
+<!--            android:id="@+id/switch_contact"-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_marginStart="32dp"-->
+<!--            android:layout_marginTop="19dp"-->
+<!--            android:layout_marginEnd="32dp"-->
+<!--            android:text="Ввести номер вручную"-->
+<!--            android:textColor="@color/textSwitchFilter"-->
+<!--            app:layout_constraintEnd_toEndOf="parent"-->
+<!--            app:layout_constraintHorizontal_bias="1.0"-->
+<!--            app:layout_constraintStart_toStartOf="parent"-->
+<!--            app:layout_constraintTop_toBottomOf="@+id/textInputLayout2"-->
+<!--            app:thumbTint="@color/switch_thumb_color"-->
+<!--            app:trackTint="@color/switch_track_color"-->
+<!--            tools:ignore="UseSwitchCompatOrMaterialXml" />-->
+<!--        &lt;!&ndash;    android:text="Выбрать из своих контактов"&ndash;&gt;-->
+
+<!--        <com.google.android.material.textfield.TextInputLayout-->
+<!--            android:id="@+id/textInputLayout4"-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_marginStart="24dp"-->
+<!--            android:layout_marginTop="0dp"-->
+<!--            android:layout_marginEnd="24dp"-->
+<!--            android:hint="Номер телефона"-->
+<!--            android:textColorHint="@color/textHintFilter"-->
+<!--            app:boxBackgroundColor="@color/fonDialogFilter"-->
+<!--            app:boxBackgroundMode="outline"-->
+<!--            app:boxCornerRadiusBottomEnd="4dp"-->
+<!--            app:boxCornerRadiusBottomStart="4dp"-->
+<!--            app:boxCornerRadiusTopEnd="4dp"-->
+<!--            app:boxCornerRadiusTopStart="4dp"-->
+<!--            app:boxStrokeColor="@color/boxStrokeFilter"-->
+<!--            app:layout_constraintEnd_toEndOf="parent"-->
+<!--            app:layout_constraintStart_toStartOf="parent"-->
+<!--            app:layout_constraintTop_toBottomOf="@+id/switch_contact">-->
+
+<!--            <com.google.android.material.textfield.TextInputEditText-->
+<!--                android:id="@+id/phoneNumberEditText"-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:background="@null"-->
+<!--                android:inputType="text"-->
+<!--                android:padding="16dp"-->
+<!--                android:textColor="@color/textInputFilter" />-->
+<!--        </com.google.android.material.textfield.TextInputLayout>-->
+
+<!--        <androidx.cardview.widget.CardView-->
+<!--            android:id="@+id/card_contact"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:clickable="true"-->
+<!--            android:elevation="8dp"-->
+<!--            android:focusable="true"-->
+<!--            android:gravity="center"-->
+<!--            android:stateListAnimator="@animator/card_animator"-->
+<!--            app:cardBackgroundColor="@color/fonDialogFilter"-->
+<!--            app:cardCornerRadius="8dp"-->
+<!--            app:layout_constraintBottom_toBottomOf="@+id/textInputLayout4"-->
+<!--            app:layout_constraintStart_toStartOf="@+id/textInputLayout4">-->
+
+<!--            <TextView-->
+<!--                android:id="@+id/button_contact"-->
+<!--                android:layout_width="wrap_content"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:background="@color/buttonBackgroundFilter"-->
+<!--                android:clickable="false"-->
+<!--                android:focusable="false"-->
+<!--                android:padding="10dp"-->
+<!--                android:paddingStart="32dp"-->
+<!--                android:paddingEnd="32dp"-->
+<!--                android:text="Открыть контакты"-->
+<!--                android:textColor="@color/white"-->
+<!--                android:textSize="16sp" />-->
+<!--        </androidx.cardview.widget.CardView>-->
+<!--        &lt;!&ndash;        app:cardUseCompatPadding="true"&ndash;&gt;-->
+<!--        &lt;!&ndash;        android:foreground="?attr/selectableItemBackgroundBorderless"&ndash;&gt;-->
+
+<!--        <TextView-->
+<!--            android:id="@+id/phoneNumberTextView"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_marginStart="12dp"-->
+<!--            android:layout_marginBottom="-15dp"-->
+<!--            android:background="@color/fonDialogFilter"-->
+<!--            android:paddingStart="4dp"-->
+<!--            android:paddingEnd="4dp"-->
+<!--            android:text="Перехват СМС с номера"-->
+<!--            android:textColor="@color/frameTextFilter"-->
+<!--            android:textSize="11sp"-->
+<!--            app:layout_constraintBottom_toTopOf="@+id/textInputLayout4"-->
+<!--            app:layout_constraintStart_toStartOf="@+id/textInputLayout4" />-->
+
+<!--        <View-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="1dp"-->
+<!--            android:layout_marginStart="16dp"-->
+<!--            android:layout_marginTop="19dp"-->
+<!--            android:layout_marginEnd="16dp"-->
+<!--            android:background="@color/lineFilter"-->
+<!--            app:layout_constraintTop_toBottomOf="@+id/textInputLayout4"-->
+<!--            tools:layout_editor_absoluteX="0dp" />-->
+
+<!--        <com.google.android.material.switchmaterial.SwitchMaterial-->
+<!--            android:id="@+id/switch_bot"-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_marginStart="32dp"-->
+<!--            android:layout_marginTop="19dp"-->
+<!--            android:layout_marginEnd="32dp"-->
+<!--            android:text="Использовать свой бот"-->
+<!--            android:textColor="@color/textSwitchFilter"-->
+<!--            app:layout_constraintEnd_toEndOf="parent"-->
+<!--            app:layout_constraintStart_toStartOf="parent"-->
+<!--            app:layout_constraintTop_toBottomOf="@+id/textInputLayout4"-->
+<!--            app:thumbTint="@color/switch_thumb_color"-->
+<!--            app:trackTint="@color/switch_track_color"-->
+<!--            tools:ignore="UseSwitchCompatOrMaterialXml" />-->
+
+<!--        <com.google.android.material.textfield.TextInputLayout-->
+<!--            android:id="@+id/textInputLayout3"-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_marginStart="24dp"-->
+<!--            android:layout_marginTop="0dp"-->
+<!--            android:layout_marginEnd="24dp"-->
+<!--            android:hint="Токен API"-->
+<!--            android:textColorHint="@color/textHintFilter"-->
+<!--            app:boxBackgroundColor="@color/fonDialogFilter"-->
+<!--            app:boxBackgroundMode="outline"-->
+<!--            app:boxCornerRadiusBottomEnd="4dp"-->
+<!--            app:boxCornerRadiusBottomStart="4dp"-->
+<!--            app:boxCornerRadiusTopEnd="4dp"-->
+<!--            app:boxCornerRadiusTopStart="4dp"-->
+<!--            app:boxStrokeColor="@color/boxStrokeFilter"-->
+<!--            app:layout_constraintEnd_toEndOf="parent"-->
+<!--            app:layout_constraintStart_toStartOf="parent"-->
+<!--            app:layout_constraintTop_toBottomOf="@+id/switch_bot">-->
+
+<!--            <com.google.android.material.textfield.TextInputEditText-->
+<!--                android:id="@+id/apiTockenEditText"-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:background="@null"-->
+<!--                android:inputType="text"-->
+<!--                android:padding="16dp"-->
+<!--                android:textColor="@color/textInputFilter" />-->
+<!--        </com.google.android.material.textfield.TextInputLayout>-->
+
+<!--        <View-->
+<!--            android:id="@+id/view"-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="1dp"-->
+<!--            android:layout_marginStart="16dp"-->
+<!--            android:layout_marginTop="19dp"-->
+<!--            android:layout_marginEnd="16dp"-->
+<!--            android:background="@color/lineFilter"-->
+<!--            app:layout_constraintTop_toBottomOf="@+id/textInputLayout3"-->
+<!--            tools:layout_editor_absoluteX="0dp" />-->
+
+<!--        <androidx.cardview.widget.CardView-->
+<!--            android:id="@+id/card_bot"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:clickable="true"-->
+<!--            android:elevation="8dp"-->
+<!--            android:focusable="true"-->
+<!--            android:gravity="center"-->
+<!--            android:stateListAnimator="@animator/card_animator"-->
+<!--            app:cardBackgroundColor="@color/fonDialogFilter"-->
+<!--            app:cardCornerRadius="8dp"-->
+<!--            app:layout_constraintBottom_toBottomOf="@+id/textInputLayout3"-->
+<!--            app:layout_constraintStart_toStartOf="@+id/textInputLayout3">-->
+
+<!--            <TextView-->
+<!--                android:id="@+id/button_bot"-->
+<!--                android:layout_width="wrap_content"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:background="@color/buttonBackgroundFilter"-->
+<!--                android:clickable="false"-->
+<!--                android:focusable="false"-->
+<!--                android:padding="10dp"-->
+<!--                android:paddingStart="32dp"-->
+<!--                android:paddingEnd="32dp"-->
+<!--                android:text="Открыть бота"-->
+<!--                android:textColor="@color/white"-->
+<!--                android:textSize="16sp" />-->
+<!--        </androidx.cardview.widget.CardView>-->
+<!--        &lt;!&ndash;        app:cardUseCompatPadding="true"&ndash;&gt;-->
+<!--        &lt;!&ndash;        android:foreground="?attr/selectableItemBackgroundBorderless"&ndash;&gt;-->
+
+<!--        <TextView-->
+<!--            android:id="@+id/apiTockenTextView"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_marginStart="12dp"-->
+<!--            android:layout_marginBottom="-15dp"-->
+<!--            android:background="@color/fonDialogFilter"-->
+<!--            android:paddingStart="4dp"-->
+<!--            android:paddingEnd="4dp"-->
+<!--            android:text="Бот доставляющий сообщения"-->
+<!--            android:textColor="@color/frameTextFilter"-->
+<!--            android:textSize="11sp"-->
+<!--            app:layout_constraintBottom_toTopOf="@+id/textInputLayout3"-->
+<!--            app:layout_constraintStart_toStartOf="@+id/textInputLayout3" />-->
+
+<!--        <LinearLayout-->
+<!--            android:id="@+id/linearLayout3"-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_marginStart="24dp"-->
+<!--            android:layout_marginTop="32dp"-->
+<!--            android:layout_marginEnd="16dp"-->
+<!--            android:orientation="horizontal"-->
+<!--            android:paddingBottom="24dp"-->
+<!--            app:layout_constraintEnd_toEndOf="parent"-->
+<!--            app:layout_constraintHorizontal_bias="0.0"-->
+<!--            app:layout_constraintStart_toStartOf="parent"-->
+<!--            app:layout_constraintTop_toBottomOf="@+id/textInputLayout3">-->
+
+<!--            <TextView-->
+<!--                android:layout_width="0dp"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:layout_weight="1" />-->
+
+<!--            <TextView-->
+<!--                android:layout_width="wrap_content"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:layout_weight="10" />-->
+
+<!--            <TextView-->
+<!--                android:id="@+id/button_no"-->
+<!--                android:layout_width="wrap_content"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:layout_marginEnd="8dp"-->
+<!--                android:layout_weight="1"-->
+<!--                android:gravity="center_horizontal"-->
+<!--                android:padding="8dp"-->
+<!--                android:text="Отмена"-->
+<!--                android:textColor="@color/textButtonFilter" />-->
+
+<!--            <TextView-->
+<!--                android:id="@+id/button_yes"-->
+<!--                android:layout_width="wrap_content"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:layout_marginEnd="0dp"-->
+<!--                android:layout_weight="1"-->
+<!--                android:gravity="center_horizontal"-->
+<!--                android:padding="8dp"-->
+<!--                android:text="Сохранить"-->
+<!--                android:textColor="@color/textButtonFilter" />-->
+
+<!--        </LinearLayout>-->
+
+<!--        <com.google.android.material.imageview.ShapeableImageView-->
+<!--            android:id="@+id/manualIcon"-->
+<!--            android:layout_width="24dp"-->
+<!--            android:layout_height="24dp"-->
+<!--            android:layout_marginBottom="24dp"-->
+<!--            app:srcCompat="@drawable/outline_menu_book_24"-->
+<!--            app:cardCornerRadius="0dp"-->
+<!--            android:elevation="0dp"-->
+<!--            android:clickable="true"-->
+<!--            android:focusable="true"-->
+<!--            android:foreground="?attr/selectableItemBackground"-->
+<!--            app:layout_constraintBottom_toBottomOf="@+id/linearLayout3"-->
+<!--            app:layout_constraintStart_toStartOf="@+id/linearLayout3"-->
+<!--            app:layout_constraintTop_toTopOf="@+id/linearLayout3"-->
+<!--            tools:ignore="MissingConstraints" />-->
+
+
+<!--    </androidx.constraintlayout.widget.ConstraintLayout>-->
+
+<!--</androidx.cardview.widget.CardView>-->

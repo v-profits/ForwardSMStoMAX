@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Состояние при нажатии -->
+    <item android:state_pressed="true">
+        <objectAnimator
+            android:propertyName="translationZ"
+            android:duration="100"
+            android:valueTo="1dp"
+            android:valueType="floatType" />
+    </item>
+
+    <!-- Состояние по умолчанию -->
+    <item>
+        <objectAnimator
+            android:propertyName="translationZ"
+            android:duration="100"
+            android:valueTo="4dp"
+            android:valueType="floatType" />
+    </item>
+</selector>

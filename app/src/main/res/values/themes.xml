@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="Theme.ForwardSMStoMAX" parent="Theme.MaterialComponents.Light">
+        <!-- Primary brand color. -->
+        <item name="colorPrimary">#373A3E</item> // Используется для Toolbar, AppBar, акцентов и крупных элементов.
+        <item name="colorPrimaryVariant">#373A3E</item> // Используется для статус-бара (верхняя строка с часами).
+        <item name="colorOnPrimary">@color/buttonAdd</item> // Цвет текста или иконок, которые располагаются поверх colorPrimary
+        <!-- Secondary brand color. -->
+        <item name="colorSecondary">#81D4FA</item> // Вторичный акцентный цвет — например, для кнопок, выделения, переключателей и т.п.
+        <item name="colorSecondaryVariant">@color/teal_200</item> // Альтернативный вариант вторичного цвета — может использоваться системой, где нужен
+        <item name="colorOnSecondary">@color/black</item> // Цвет текста/иконок, которые располагаются поверх вторичного цвета.
+
+        <!-- Цвет фона для основного содержимого -->
+        <item name="android:windowBackground">@color/colorPrimaryVariant</item>
+        <!-- Status bar color. -->
+        <!--        <item name="android:statusBarColor">?attr/colorPrimaryVariant</item> //Цвет статус-бара (верхняя панель с часами, сигналом и батареей).-->
+        <item name="android:statusBarColor">@color/colorPrimaryVariant</item>
+        <!-- Цветовой акцент кнопки навигации (для API 21+) -->
+        <item name="android:navigationBarColor">@color/colorPrimaryVariant</item>
+    </style>
+
+    <style name="Theme.ForwardSMStoMAX.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+
+    <style name="Theme.ForwardSMStoTelegram.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
+
+    <style name="Theme.ForwardSMStoTelegram.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
+
+    <style name="Widget.MyApp.SquareFAB" parent="Widget.MaterialComponents.FloatingActionButton">
+        <item name="shapeAppearance">@style/ShapeAppearance.MyApp.Square</item>
+    </style>
+
+    <style name="ShapeAppearance.MyApp.Square" parent="ShapeAppearance.Material3.SmallComponent">
+        <item name="cornerSize">12dp</item> <!-- скругление углов -->
+    </style>
+
+</resources>

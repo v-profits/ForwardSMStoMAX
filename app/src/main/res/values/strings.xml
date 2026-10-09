@@ -1,0 +1,147 @@
+<resources>
+    <!--    <string name="app_name">ForwardSMStoMAX</string>-->
+<!--    <string name="app_name">Пересылка смс в MAX</string>-->
+    <string name="app_name">sms › max</string>
+<!--    <string name="app_name">sms➤max</string>-->
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="nav_header_title">Android Studio</string>
+    <string name="nav_header_subtitle">android.studio@android.com</string>
+    <string name="nav_header_desc">Navigation header</string>
+    <string name="action_settings">Settings</string>
+
+    <string name="menu_home">Home</string>
+    <string name="menu_gallery">Gallery</string>
+    <string name="menu_slideshow">Slideshow</string>
+
+    <!-- Добавьте в конец файла strings.xml -->
+    <string name="max_chat_id_hint">MAX ID чата</string>
+    <string name="max_id_instance_hint">ID Instance (GREEN-API)</string>
+    <string name="max_api_token_hint">API Token (GREEN-API)</string>
+    <string name="max_chat_id_label">MAX ID чата</string>
+    <string name="max_id_instance_label">ID Instance</string>
+    <string name="max_api_token_label">API Token</string>
+
+<!--    &lt;!&ndash; ИНСТРУКЦИЯ &ndash;&gt;-->
+<!--    <string name="manual1">-->
+<!--        Это приложение позволяет автоматически пересылать входящие SMS-сообщения в MAX. Следуйте инструкциям ниже для настройки фильтра.-->
+<!--    </string>-->
+<!--    <string name="manual2">-->
+<!--        🏷️ 1. Укажите название фильтра-->
+<!--    </string>-->
+<!--    <string name="manual3">-->
+<!--        Укажите удобное имя для фильтра — оно будет показано в списке. Название используется только для вашего удобства.-->
+<!--    </string>-->
+<!--    <string name="manual4">-->
+<!--        🪪 2. Укажите MAX ID чата-->
+<!--    </string>-->
+<!--    <string name="manual5">-->
+<!--        Укажите идентификатор MAX-чата, куда будут пересылаться сообщения.\n\n-->
+<!--&lt;!&ndash;        🔹 Чтобы получить ID пользователя или группы — воспользуйтесь ботом-помощником https://t.me/ShowUserIdInfoBot.\n\n&ndash;&gt;-->
+<!--&lt;!&ndash;        Он покажет ваш ID непосредственно в Telegram.\n\n&ndash;&gt;-->
+<!--&lt;!&ndash;        Если вы получаете ID другим способом, учтите:\n\n&ndash;&gt;-->
+<!--&lt;!&ndash;        🔹 Для <font color="#42778E">группы</font> добавьте к ID знак «-», например: <font color="#42778E">-1234567890</font>.\n\n&ndash;&gt;-->
+<!--&lt;!&ndash;        🔹 Для <font color="#42778E">супергруппы</font> добавьте префикс «-100», например: <font color="#42778E">-1001234567890</font>.\n\n&ndash;&gt;-->
+<!--&lt;!&ndash;        🔹 Для <font color="#42778E">темы</font> в супергруппе укажите ID темы после символа «/», например: <font color="#42778E">-1001234567890/25</font>.&ndash;&gt;-->
+<!--    </string>-->
+<!--    <string name="manual6">-->
+<!--        🤖 3. Укажите API-токен MAX-бота-->
+<!--    </string>-->
+<!--    <string name="manual7">-->
+<!--        Чтобы отправлять сообщения в MAX, требуется токен вашего MAX-бота.\n\n-->
+<!--        🔹 Вы можете пропустить этот шаг — в этом случае будет использоваться встроенный бот приложения. Для его активации нажмите кнопку «Открыть бота» и отправьте команду <font color="#42778E">/start</font>.\n\n-->
+<!--        🔹 Если вы хотите использовать собственного бота, создайте его через <font color="#42778E">@MasterBot</font>, получите API-токен и вставьте его в соответствующее поле.\n\n-->
+<!--        🔹 Чтобы бот мог отправлять сообщения в группу, добавьте его в эту группу.-->
+<!--    </string>-->
+<!--    <string name="manual8">-->
+<!--        ☎️ 5. Укажите номера телефонов для фильтрации-->
+<!--    </string>-->
+<!--    <string name="manual9">-->
+<!--        Укажите один из вариантов:\n\n-->
+<!--        🔹 Введите номер вручную.\n\n-->
+<!--        🔹 Или выберите один или несколько контактов из адресной книги.\n\n-->
+<!--        🔸 Важно: нельзя использовать оба способа одновременно.-->
+<!--    </string>-->
+<!--    <string name="manual10">-->
+<!--        💾 6. Сохраните настройки-->
+<!--    </string>-->
+<!--    <string name="manual11">-->
+<!--        После заполнения всех полей нажмите кнопку «Сохранить». Фильтр будет добавлен и начнёт работать автоматически.-->
+<!--    </string>-->
+<!--    <string name="manual12">-->
+<!--        🛠️ Дополнительные функции управления фильтрами:-->
+<!--    </string>-->
+<!--    <string name="manual13">-->
+<!--        🔹 Вы можете включать или отключать фильтры в списке.\n\n-->
+<!--        🔹 При редактировании фильтра, если указаны новые номера контактов, все ранее указанные номера этого фильтра будут удалены и заменены новыми.\n\n-->
+<!--        🔹 Можно просмотреть всю информацию, указанную при настройке фильтра.\n\n-->
+<!--        🔹 При нажатии на кнопку «Удалить» фильтр будет удалён.-->
+<!--    </string>-->
+<!--    <string name="manual14">-->
+<!--        Версия приложения:-->
+<!--    </string>-->
+
+    <!-- ИНСТРУКЦИЯ -->
+    <string name="manual1">
+            Это приложение позволяет автоматически пересылать входящие SMS-сообщения в MAX. Следуйте инструкциям ниже для настройки фильтра.
+    </string>
+    <string name="manual2">
+        🏷️ 1. Укажите название фильтра
+    </string>
+    <string name="manual3">
+        Укажите удобное имя для фильтра — оно будет показано в списке. Название используется только для вашего удобства.
+    </string>
+    <string name="manual4">
+        🪪 2. Укажите MAX ID чата
+    </string>
+    <string name="manual5">
+        Укажите идентификатор MAX-чата, куда будут пересылаться сообщения.\n\n
+    </string>
+    <string name="manual6">
+        🔌 3. Укажите ID Instance (GREEN-API)
+    </string>
+    <string name="manual7">
+        ID Instance — это идентификатор вашего GREEN-API аккаунта. Получить его можно в личном кабинете GREEN-API после регистрации и создания инстанса.\n\n
+        🔹 Зарегистрируйтесь на сайте green-api.com\n\n
+        🔹 Создайте инстанс в личном кабинете\n\n
+        🔹 ID Instance будет отображаться на главной странице вашего инстанса
+    </string>
+    <string name="manual8">
+        🔑 4. Укажите API-токен (GREEN-API)
+    </string>
+    <string name="manual9">
+        API-токен — это ключ доступа к вашему GREEN-API аккаунту. Получить его можно там же, в личном кабинете GREEN-API.\n\n
+        🔹 Войдите в личный кабинет green-api.com\n\n
+        🔹 Выберите ваш инстанс\n\n
+        🔹 Перейдите в раздел "Настройки" → "Ключи API"\n\n
+        🔹 Скопируйте API-токен и вставьте его в соответствующее поле
+    </string>
+    <string name="manual10">
+        ☎️ 5. Укажите номера телефонов для фильтрации
+    </string>
+    <string name="manual11">
+        Укажите один из вариантов:\n\n
+        🔹 Введите номер вручную.\n\n
+        🔹 Или выберите один или несколько контактов из адресной книги.\n\n
+        🔸 Важно: нельзя использовать оба способа одновременно.
+    </string>
+    <string name="manual12">
+        💾 6. Сохраните настройки
+    </string>
+    <string name="manual13">
+        После заполнения всех полей нажмите кнопку «Сохранить». Фильтр будет добавлен и начнёт работать автоматически.
+    </string>
+    <string name="manual14">
+        🛠️ Дополнительные функции управления фильтрами:
+    </string>
+    <string name="manual15">
+        🔹 Вы можете включать или отключать фильтры в списке.\n\n
+        🔹 При редактировании фильтра, если указаны новые номера контактов, все ранее указанные номера этого фильтра будут удалены и заменены новыми.\n\n
+        🔹 Можно просмотреть всю информацию, указанную при настройке фильтра.\n\n
+        🔹 При нажатии на кнопку «Удалить» фильтр будет удалён.
+    </string>
+    <string name="manual16">
+        Версия приложения:
+    </string>
+
+</resources>

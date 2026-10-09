@@ -1,0 +1,87 @@
+    /**
+     * Обработчик очереди отложенных сообщений
+     * - Отправляет сообщения по одному (FIFO)
+     * - Между сообщениями пауза 10 секунд
+     * - Если какое-то сообщение не отправилось — останавливаем всю отправку
+     * - Проверяем очередь каждые 10 минут (через Handler)
+     */
+    private fun startQueueProcessor(context: Context) {
+        // Если уже обрабатываем очередь или есть запланированный запуск — выходим
+        if (isProcessingQueue) {
+            Log.d("aaa", "Обработчик очереди уже запущен, пропускаем")
+            return
+        }
+
+        // Отменяем предыдущий запланированный запуск (если был)
+        queueCheckRunnable?.let { queueCheckHandler.removeCallbacks(it) }
+
+        // Планируем ПЕРВУЮ проверку очереди через 10 минут
+        queueCheckRunnable = Runnable {
+            processQueue(context)
+        }
+        queueCheckHandler.postDelayed(queueCheckRunnable!!, 10 * 60 * 1000)  // 10 минут
+
+        Log.d("aaa", "⏰ Запланирована проверка очереди через 10 минут")
+    }
+
+    private fun processQueue(context: Context) {
+        val dbHelper = DatabaseHelper(context)
+        val pendingMessages = dbHelper.getAllQueuedMessages()
+
+        if (pendingMessages.isEmpty()) {
+            Log.d("aaa", "📭 Очередь пуста, обработчик останавливается")
+            isProcessingQueue = false
+            queueCheckRunnable?.let { queueCheckHandler.removeCallbacks(it) }
+            queueCheckRunnable = null
+            return
+        }
+
+        Log.d("aaa", "📨 Найдено ${pendingMessages.size} сообщений в очереди")
+
+        // Запускаем отправку в отдельном потоке
+        Thread {
+            var shouldContinue = true
+
+            for ((index, message) in pendingMessages.withIndex()) {
+                if (!shouldContinue) break
+
+                val messageWithTime = message.getMessageWithTimestamp()
+                Log.d("aaa", "Отправка сообщения #${message.id} (попытка ${message.retryCount + 1})")
+
+                val startTime = System.currentTimeMillis()
+                val success = sendToMax(
+                    context = context,
+                    message = messageWithTime,
+                    chatId = message.chatId,
+                    idInstance = message.idInstance,
+                    apiToken = message.apiToken
+                )
+                val endTime = System.currentTimeMillis()
+
+                if (success) {
+                    dbHelper.removeMessageFromQueue(message.id)
+                    Log.d("aaa", "✅ Сообщение #${message.id} отправлено за ${endTime - startTime} мс")
+
+                    // ПРИНУДИТЕЛЬНАЯ ЗАДЕРЖКА 10 СЕКУНД ПОСЛЕ УСПЕШНОЙ ОТПРАВКИ
+                    if (index < pendingMessages.size - 1) {
+                        Log.d("aaa", "⏳ Ожидание 10 секунд перед следующим сообщением...")
+                        Thread.sleep(10000)  // 10 секунд
+                        Log.d("aaa", "✅ Продолжаем отправку")
+                    }
+                } else {
+                    dbHelper.incrementRetryCount(message.id) // Увеличиваем счетчик попыток
+                    Log.e("aaa", "❌ Ошибка отправки сообщения #${message.id}, останавливаем отправку")
+                    shouldContinue = false // Останавливаем отправку
+                }
+            }
+
+            // Планируем следующую проверку через 10 минут
+            queueCheckRunnable = Runnable {
+                isProcessingQueue = false // Останавливаем текущий обработчик
+                processQueue(context) // Запускаем заново
+            }
+            queueCheckHandler.postDelayed(queueCheckRunnable!!, 10 * 60 * 1000) // 10 минут
+            isProcessingQueue = false // Останавливаем текущий обработчик
+
+        }.start()
+    }

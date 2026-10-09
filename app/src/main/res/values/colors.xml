@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="purple_200">#FFBB86FC</color>
+    <color name="purple_500">#FF6200EE</color>
+    <color name="purple_700">#FF3700B3</color>
+    <color name="teal_200">#FF03DAC5</color>
+    <color name="teal_700">@color/colorPrimaryVariant</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="transparent">#00FFFFFF</color>
+
+    // цвета для диалога Фильтр
+    <color name="textHintFilter">#485475</color>
+    <color name="frameTextFilter">@color/teal_700</color>
+    <color name="lineFilter">#D4D7DC</color>
+    <color name="titleFilter">#485475</color>
+    <color name="boxStrokeFilter">@color/teal_700</color>
+    <color name="textInputFilter">@color/teal_700</color>
+    <color name="textSwitchFilter">#485475</color>
+    <color name="buttonBackgroundFilter">#42778E</color>
+    <color name="textButtonFilter">@color/teal_700</color>
+
+    // цвета для диалога Контакт
+    <color name="textHintContact">#616378</color>
+    <color name="lineContact">#616378</color>
+    <color name="boxStrokeContact">@color/teal_700</color>
+    <color name="textInputContact">@color/teal_700</color>
+    <color name="imageContact">#FF6D00</color>
+    <color name="textButtonContact">@color/teal_700</color>
+
+    // цвета для image minus
+    <color name="minusColor0">#FF6D00</color>
+    <color name="minusColor1">#00C853</color>
+    <color name="minusColor2">#FFD740</color>
+    <color name="minusColor3">#0091EA</color>
+
+    <color name="minusColor4">#C51162</color>
+    <color name="minusColor5">#AEEA00</color>
+    <color name="minusColor6">#FFAB00</color>
+    <color name="minusColor7">#AA00FF</color>
+
+    // кнопка добавить
+<!--    <color name="buttonAdd">#F48FB1</color>-->
+    <color name="buttonAdd">#f45d48</color>
+    // фон для активити
+<!--    <color name="fonActivity">#E7E5DF</color>-->
+    <color name="fonActivity">#f8f5f2</color>
+    // фон для диалога фильтра
+<!--    <color name="fonDialogFilter">#F6F5F2</color>-->
+    <color name="fonDialogFilter">#fffffe</color>
+    // фон для итема фильтра
+<!--    <color name="fonItemFilter">#F6F3F3</color>-->
+    <color name="fonItemFilter">#fffffe</color>
+    // фон для диалога контактов
+<!--    <color name="fonDialogContact">#F0EFEC</color>-->
+    <color name="fonDialogContact">#fffffe</color>
+    // фон для итема контактов
+<!--    <color name="fonItemContact">#F0EFEC</color>-->
+    <color name="fonItemContact">#fffffe</color>
+    // фон для итема информации
+<!--    <color name="fonItemInfo">#FAF9F7</color>-->
+    <color name="fonItemInfo">#fffffe</color>
+
+    // фон для бара, кнопки навигации
+    <color name="number">#3B4397</color>
+    <color name="colorPrimaryVariant">#203B47</color>
+
+</resources>

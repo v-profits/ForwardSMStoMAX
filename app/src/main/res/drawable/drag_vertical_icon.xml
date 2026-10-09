@@ -1,0 +1,22 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="6dp"
+    android:height="24dp"
+    android:viewportWidth="6"
+    android:viewportHeight="24">
+  <path
+      android:fillColor="@color/lineFilter"
+      android:pathData="
+
+      M9,3  H2 V5  H0 V3
+      M9,7  H2 V9  H0 V7
+      M9,11 H2 V13 H0 V11
+      M9,15 H2 V17 H0 V15
+      M9,19 H2 V21 H0 V19
+
+      M13,3  H6 V5  H4 V3
+      M13,7  H6 V9  H4 V7
+      M13,11 H6 V13 H4 V11
+      M13,15 H6 V17 H4 V15
+      M13,19 H6 V21 H4 V19Z
+"/>
+</vector>
