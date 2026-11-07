@@ -7,6 +7,9 @@
         android:required="false" />
 
     <!-- Разрешения -->
+    <uses-permission android:name="android.permission.INTERNET"/> <!--отправка запросов в GREEN-API-->
+    <uses-permission android:name="android.permission.WAKE_LOCK"/> <!--не засыпать при отправке и опросе статусов-->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/> <!--уведомления (Android 13+)-->
     <uses-permission android:name="android.permission.RECEIVE_SMS"/> <!--получать сообщения-->
     <uses-permission android:name="android.permission.READ_SMS"/> <!--читать сообщения-->
     <uses-permission android:name="android.permission.READ_CONTACTS" /> <!--доступ к контактам-->

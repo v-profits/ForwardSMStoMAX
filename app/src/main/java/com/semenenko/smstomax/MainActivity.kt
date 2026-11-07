@@ -1,4 +1,4 @@
-package com.example.forwardsmstomax  // ← MAX версия
+package com.semenenko.smstomax
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -30,10 +30,6 @@ class MainActivity : AppCompatActivity() {
     lateinit var maxChatIdEditText: TextInputEditText       // ID чата в MAX
     lateinit var maxIdInstanceEditText: TextInputEditText   // ID Instance (GREEN-API)
     lateinit var maxApiTokenEditText: TextInputEditText     // API Token (GREEN-API)
-
-    // Telegram версия: были эти поля (в MAX они не используются, но оставлены для совместимости)
-    lateinit var idUserEditText: TextInputEditText          // ID чата Telegram
-    lateinit var apiTockenEditText: TextInputEditText       // токен Telegram бота
 
     lateinit var dbHelper: DatabaseHelper                   // работа с БД
     private var permissionJob: Job? = null                  // для ожидания разрешений
@@ -72,7 +68,7 @@ class MainActivity : AppCompatActivity() {
         // Инициализация БД и загрузка списка фильтров
         dbHelper = DatabaseHelper(this)
         val rawUsers = dbHelper.getAllUsers()
-        userList = rawUsers.map { FilterData(it.id, it.telegramUserId, it.filterName, it.apiTokenBot, it.isActive) }.toMutableList()
+        userList = rawUsers.map { FilterData(it.id, it.maxChatId, it.filterName, it.apiTokenBot, it.isActive) }.toMutableList()
         userAdapter = FilterItemAdapter(dbHelper, userList, this) { position, isActive ->
             userList[position].isActive = isActive
             dbHelper.updateUserActiveStatus(userList[position].id, isActive)
@@ -162,22 +158,6 @@ class MainActivity : AppCompatActivity() {
             return true
         }
         return false
-    }
-
-    // ==================== ТОЛЬКО ДЛЯ TELEGRAM ВЕРСИИ ====================
-    // В MAX версии эта функция не нужна, но пока оставлена
-    @SuppressLint("QueryPermissionsNeeded")
-    fun openTelegramBot(context: Context) {
-        val botUsername = "forward_sms_to_telegram_bot"
-        val uri = Uri.parse("https://t.me/$botUsername")
-        val intent = Intent(Intent.ACTION_VIEW, uri).apply {
-            setPackage("org.telegram.messenger")
-        }
-        if (intent.resolveActivity(packageManager) != null) {
-            context.startActivity(intent)
-        } else {
-            context.startActivity(Intent(Intent.ACTION_VIEW, uri))
-        }
     }
 
     // Запрос на отключение оптимизации батареи (для работы в фоне)

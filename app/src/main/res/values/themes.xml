@@ -25,9 +25,9 @@
         <item name="windowNoTitle">true</item>
     </style>
 
-    <style name="Theme.ForwardSMStoTelegram.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
+    <style name="Theme.ForwardSMStoMAX.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
 
-    <style name="Theme.ForwardSMStoTelegram.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
+    <style name="Theme.ForwardSMStoMAX.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
 
     <style name="Widget.MyApp.SquareFAB" parent="Widget.MaterialComponents.FloatingActionButton">
         <item name="shapeAppearance">@style/ShapeAppearance.MyApp.Square</item>

@@ -110,7 +110,7 @@
             android:background="@color/lineFilter"
             app:layout_constraintTop_toBottomOf="@+id/textInputLayout" />
 
-        <!-- MAX Chat ID (вместо ID пользователя Telegram) -->
+        <!-- MAX Chat ID  -->
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/textInputLayoutChatId"
             android:layout_width="match_parent"
@@ -481,7 +481,7 @@
 <!--                android:id="@+id/imageView2"-->
 <!--                android:layout_width="32dp"-->
 <!--                android:layout_height="32dp"-->
-<!--                app:srcCompat="@drawable/telegram" />-->
+<!--                app:srcCompat="@drawable/max_icon" />-->
 
 <!--            <TextView-->
 <!--                android:id="@+id/dialog_title"-->

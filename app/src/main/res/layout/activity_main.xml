@@ -15,7 +15,7 @@
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
         android:background="@color/colorPrimaryVariant"
-        app:popupTheme="@style/Theme.ForwardSMStoTelegram.PopupOverlay"
+        app:popupTheme="@style/Theme.ForwardSMStoMAX.PopupOverlay"
         tools:ignore="MissingConstraints">
 
         <TextView

@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.forwardsmstomax"
+    namespace = "com.semenenko.smstomax"
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "com.example.forwardsmstomax"
+        applicationId = "com.semenenko.smstomax"
         minSdk = 26
         targetSdk = 37
         versionCode = 1

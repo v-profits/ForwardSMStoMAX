@@ -1,4 +1,4 @@
-package com.example.forwardsmstomax
+package com.semenenko.smstomax
 
 import org.junit.Test
 
