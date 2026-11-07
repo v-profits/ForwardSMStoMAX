@@ -1,5 +1,4 @@
-package com.semenenko.smstomax
-
+package com.semenenko.smstomax.data
 import java.text.SimpleDateFormat
 import java.util.*
 

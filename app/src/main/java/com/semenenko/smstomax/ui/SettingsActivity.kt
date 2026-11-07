@@ -1,5 +1,10 @@
-package com.semenenko.smstomax
+package com.semenenko.smstomax.ui
 
+import com.semenenko.smstomax.R
+import com.semenenko.smstomax.data.DatabaseHelper
+import com.semenenko.smstomax.data.FiltersBackup
+import com.semenenko.smstomax.data.SettingsStore
+import com.semenenko.smstomax.util.AppLog
 import android.app.AlertDialog
 import android.content.Intent
 import android.os.Bundle

@@ -1,5 +1,7 @@
-package com.semenenko.smstomax
+package com.semenenko.smstomax.util
 
+import com.semenenko.smstomax.sms.ForegroundService
+import com.semenenko.smstomax.ui.MainActivity
 import android.content.Intent
 
 /**

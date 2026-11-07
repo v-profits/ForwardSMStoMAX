@@ -1,6 +1,5 @@
-package com.semenenko.smstomax
-
-import com.semenenko.smstomax.Generators.parseTemperatureToDouble
+package com.semenenko.smstomax.sms
+import com.semenenko.smstomax.sms.Generators.parseTemperatureToDouble
 
 // ==================== КОНФИГУРАЦИЯ ====================
 // ☎️ Списки номеров телефонов котельных

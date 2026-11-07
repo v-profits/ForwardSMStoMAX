@@ -1,5 +1,8 @@
-package com.semenenko.smstomax
+package com.semenenko.smstomax.ui
 
+import com.semenenko.smstomax.R
+import com.semenenko.smstomax.util.AppLog
+import com.semenenko.smstomax.util.LogEntry
 import android.app.AlertDialog
 import android.content.Intent
 import android.graphics.Color

@@ -1,5 +1,4 @@
-package com.semenenko.smstomax
-
+package com.semenenko.smstomax.data
 /**
  * Класс данных для конфигурации MAX (GREEN-API)
  *

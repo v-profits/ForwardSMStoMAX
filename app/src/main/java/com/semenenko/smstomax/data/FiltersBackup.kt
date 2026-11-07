@@ -1,5 +1,4 @@
-package com.semenenko.smstomax
-
+package com.semenenko.smstomax.data
 import org.json.JSONArray
 import org.json.JSONObject
 import java.text.SimpleDateFormat

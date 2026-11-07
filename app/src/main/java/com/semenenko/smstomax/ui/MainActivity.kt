@@ -1,5 +1,12 @@
-package com.semenenko.smstomax
+package com.semenenko.smstomax.ui
 
+import com.semenenko.smstomax.R
+import com.semenenko.smstomax.data.ContactData
+import com.semenenko.smstomax.data.DatabaseHelper
+import com.semenenko.smstomax.data.FilterData
+import com.semenenko.smstomax.util.AppLog
+import com.semenenko.smstomax.util.Functions
+import com.semenenko.smstomax.util.PermissionHelper
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context

@@ -1,5 +1,8 @@
-package com.semenenko.smstomax
+package com.semenenko.smstomax.ui
 
+import com.semenenko.smstomax.R
+import com.semenenko.smstomax.data.DatabaseHelper
+import com.semenenko.smstomax.data.FilterData
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.AlertDialog

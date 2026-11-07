@@ -1,5 +1,6 @@
-package com.semenenko.smstomax
+package com.semenenko.smstomax.util
 
+import com.semenenko.smstomax.data.SettingsStore
 import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase

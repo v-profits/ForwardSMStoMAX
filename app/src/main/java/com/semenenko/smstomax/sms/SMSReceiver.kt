@@ -1,6 +1,9 @@
 
-package com.semenenko.smstomax
+package com.semenenko.smstomax.sms
 
+import com.semenenko.smstomax.data.DatabaseHelper
+import com.semenenko.smstomax.util.AppLog
+import com.semenenko.smstomax.util.Functions
 import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
 import android.content.Context

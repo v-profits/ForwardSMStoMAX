@@ -1,5 +1,8 @@
-package com.semenenko.smstomax
+package com.semenenko.smstomax.util
 
+import com.semenenko.smstomax.R
+import com.semenenko.smstomax.ui.MainActivity
+import com.semenenko.smstomax.ui.REQUEST_CODE_ALL_PERMISSIONS
 import android.app.AlertDialog
 import android.content.Context
 import android.content.pm.PackageManager

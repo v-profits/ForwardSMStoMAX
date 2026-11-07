@@ -1,5 +1,7 @@
-package com.semenenko.smstomax
+package com.semenenko.smstomax.ui
 
+import com.semenenko.smstomax.R
+import com.semenenko.smstomax.data.ContactData
 import android.annotation.SuppressLint
 import android.content.Context
 import android.view.LayoutInflater

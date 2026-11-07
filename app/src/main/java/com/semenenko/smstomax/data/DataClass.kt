@@ -1,5 +1,4 @@
-package com.semenenko.smstomax
-
+package com.semenenko.smstomax.data
 /**
  * Данные контакта из адресной книги телефона
  * @param nameContact имя контакта

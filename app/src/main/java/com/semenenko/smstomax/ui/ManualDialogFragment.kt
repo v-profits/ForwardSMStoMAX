@@ -1,5 +1,6 @@
-package com.semenenko.smstomax
+package com.semenenko.smstomax.ui
 
+import com.semenenko.smstomax.R
 import android.app.Dialog
 import android.os.Bundle
 import android.widget.TextView

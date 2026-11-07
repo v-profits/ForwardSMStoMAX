@@ -1,5 +1,4 @@
-package com.semenenko.smstomax
-
+package com.semenenko.smstomax.sms
 // ☎️ Списки номеров телефонов тепло-генераторов
 val listPhoneGenerators = listOf("+79278015683", "+79278015702", "+79278015726", "+79278015728", "+79278015740") // телефоны генераторов
 

@@ -1,5 +1,7 @@
-package com.semenenko.smstomax
+package com.semenenko.smstomax.data
 
+import com.semenenko.smstomax.sms.SMSReceiver
+import com.semenenko.smstomax.util.Functions
 import android.annotation.SuppressLint
 import android.content.ContentValues
 import android.content.Context

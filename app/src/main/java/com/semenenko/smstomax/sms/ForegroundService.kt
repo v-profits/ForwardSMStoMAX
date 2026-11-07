@@ -1,5 +1,6 @@
-package com.semenenko.smstomax
+package com.semenenko.smstomax.sms
 
+import com.semenenko.smstomax.R
 import android.annotation.SuppressLint
 import android.app.Notification
 import android.app.NotificationChannel
