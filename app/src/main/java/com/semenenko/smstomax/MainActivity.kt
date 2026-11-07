@@ -9,9 +9,12 @@ import android.os.Build
 import android.os.Bundle
 import android.os.PowerManager
 import android.provider.Settings
+import android.view.View
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -60,6 +63,22 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        // Android 15+ рисует приложение под статус-баром: сдвигаем содержимое вниз на высоту статус-бара,
+        // иначе шапка (и шестерёнка) оказываются под ним и не получают нажатий
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById<View>(R.id.root_main)) { v, insets ->
+            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            v.setPadding(v.paddingLeft, bars.top, v.paddingRight, v.paddingBottom)
+            insets
+        }
+
+        // Шестерёнка в шапке — экран «Настройки» (журнал, экспорт/импорт фильтров)
+        findViewById<View>(R.id.btn_settings).setOnClickListener {
+            startActivity(Intent(this, SettingsActivity::class.java))
+        }
+
+        // Удаляем устаревшие записи журнала (срок хранения задаётся в настройках)
+        Thread { AppLog.purge(applicationContext) }.start()
 
         // Настройка RecyclerView
         recyclerView = findViewById(R.id.recyclerViewUsers)
@@ -130,6 +149,12 @@ class MainActivity : AppCompatActivity() {
             }
         })
         itemTouchHelper.attachToRecyclerView(recyclerView)
+    }
+
+    // После возврата с экрана настроек список мог измениться (импорт фильтров)
+    override fun onResume() {
+        super.onResume()
+        if (::dbHelper.isInitialized && ::recyclerView.isInitialized) refreshFilterList()
     }
 
     // Обновление списка фильтров после добавления/удаления/редактирования

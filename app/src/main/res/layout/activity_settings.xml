@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/colorPrimaryVariant"
+    android:fitsSystemWindows="true"
+    android:orientation="vertical">
+
+    <!-- Шапка -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/btn_back"
+            android:layout_width="56dp"
+            android:layout_height="match_parent"
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:text="‹"
+            android:textColor="@color/white"
+            android:textSize="32sp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Настройки"
+            android:textColor="@color/white"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:background="@color/fonActivity">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingBottom="24dp">
+
+            <!-- ===== Журнал ===== -->
+            <TextView
+                style="@style/SettingsSection"
+                android:text="ЖУРНАЛ СОБЫТИЙ" />
+
+            <LinearLayout
+                android:id="@+id/row_open_log"
+                style="@style/SettingsRow">
+
+                <TextView
+                    style="@style/SettingsTitle"
+                    android:text="Открыть журнал" />
+
+                <TextView
+                    style="@style/SettingsSubtitle"
+                    android:text="Путь каждого SMS: приём, фильтр, отправка, очередь, статус доставки" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/row_retention"
+                style="@style/SettingsRow">
+
+                <TextView
+                    style="@style/SettingsTitle"
+                    android:text="Срок хранения записей" />
+
+                <TextView
+                    android:id="@+id/tv_retention_value"
+                    style="@style/SettingsSubtitle"
+                    android:text="7 дней" />
+            </LinearLayout>
+
+            <LinearLayout
+                style="@style/SettingsRow"
+                android:id="@+id/row_errors_only"
+                android:orientation="horizontal">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        style="@style/SettingsTitle"
+                        android:text="Только проблемы" />
+
+                    <TextView
+                        style="@style/SettingsSubtitle"
+                        android:text="Писать в журнал только предупреждения и ошибки (обычные успешные события не сохраняются)" />
+                </LinearLayout>
+
+                <androidx.appcompat.widget.SwitchCompat
+                    android:id="@+id/switch_errors_only"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/row_clear_log"
+                style="@style/SettingsRow">
+
+                <TextView
+                    style="@style/SettingsTitle"
+                    android:text="Очистить журнал" />
+
+                <TextView
+                    style="@style/SettingsSubtitle"
+                    android:text="Удалить все записи" />
+            </LinearLayout>
+
+            <!-- ===== Фильтры ===== -->
+            <TextView
+                style="@style/SettingsSection"
+                android:text="ФИЛЬТРЫ" />
+
+            <LinearLayout
+                android:id="@+id/row_export"
+                style="@style/SettingsRow">
+
+                <TextView
+                    style="@style/SettingsTitle"
+                    android:text="Экспорт фильтров" />
+
+                <TextView
+                    style="@style/SettingsSubtitle"
+                    android:text="Сохранить все фильтры в файл JSON (файл содержит токены GREEN-API)" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/row_import"
+                style="@style/SettingsRow">
+
+                <TextView
+                    style="@style/SettingsTitle"
+                    android:text="Импорт фильтров" />
+
+                <TextView
+                    style="@style/SettingsSubtitle"
+                    android:text="Загрузить фильтры из файла JSON: добавить к текущим или заменить все" />
+            </LinearLayout>
+
+            <!-- ===== О приложении ===== -->
+            <TextView
+                style="@style/SettingsSection"
+                android:text="О ПРИЛОЖЕНИИ" />
+
+            <TextView
+                android:id="@+id/tv_version"
+                style="@style/SettingsSubtitle"
+                android:layout_marginStart="16dp"
+                android:layout_marginTop="8dp"
+                android:text="Пересылка SMS в MAX" />
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

@@ -67,6 +67,16 @@ class SMSReceiver : BroadcastReceiver() {
         private val pendingRunnables = mutableMapOf<String, Runnable>()
         private val handler = Handler(Looper.getMainLooper())
 
+        // Короткие коды сообщений для журнала (ключ — senderLabel) и счётчик частей
+        private val messageRefs = mutableMapOf<String, String>()
+        private val partCounts = mutableMapOf<String, Int>()
+
+        // true после первой записи «процесс запущен» — чтобы видеть в журнале перезапуски процесса
+        private var processMarked = false
+
+        // Через сколько мс без финального статуса запись о сообщении считается «не подтверждённой»
+        private const val STATUS_TIMEOUT_MS = 15 * 60 * 1000L
+
         private var isProcessingQueue = false
         private val queueCheckHandler = Handler(Looper.getMainLooper())
         private var queueCheckRunnable: Runnable? = null
@@ -88,7 +98,10 @@ class SMSReceiver : BroadcastReceiver() {
             val chatId: String,
             val idInstance: String,
             val apiToken: String,
-            val formattedText: String
+            val formattedText: String,
+            val ref: String = "",
+            val createdAt: Long = System.currentTimeMillis(),
+            var lastStatus: String = ""
         )
         private val pendingStatusChecks = mutableMapOf<String, PendingStatusCheck>()
 
@@ -130,11 +143,16 @@ class SMSReceiver : BroadcastReceiver() {
     @SuppressLint("UnspecifiedImmutableFlag")
     override fun onReceive(context: Context, intent: Intent?) {
         if (intent?.action == "android.provider.Telephony.SMS_RECEIVED") {
+            if (!processMarked) {
+                processMarked = true
+                AppLog.i(context, "СИСТЕМА", "Процесс приложения запущен системой (память очищена)")
+            }
             val bundle = intent.extras
             if (bundle != null) {
                 val pdus = bundle.get("pdus") as? Array<*>
                 if (pdus.isNullOrEmpty()) {
                     Log.e(TAG, "Ошибка: pdus пустой или null.")
+                    AppLog.e(context, "ПРИЁМ", "SMS без данных (pdus пустой)")
                     return
                 }
 
@@ -149,6 +167,7 @@ class SMSReceiver : BroadcastReceiver() {
                     val lastSeen = recentlyProcessed[dedupKey]
                     if (lastSeen != null && now - lastSeen < DEDUP_WINDOW_MS) {
                         Log.w(TAG, "⚠️ Пропускаем дубликат SMS от $sender (получено повторно за ${now - lastSeen} мс)")
+                        AppLog.w(context, "ДУБЛЬ", "Повтор SMS проигнорирован (через ${now - lastSeen} мс), текст: ${messageBody.take(40)}", sender = sender)
                         continue
                     }
                     recentlyProcessed[dedupKey] = now
@@ -165,6 +184,9 @@ class SMSReceiver : BroadcastReceiver() {
 
                     // Добавляем часть сообщения в буфер (для длинных SMS)
                     messageBuffer.getOrPut(senderLabel) { mutableListOf() }.add(messageBody)
+                    val ref = messageRefs.getOrPut(senderLabel) { AppLog.newRef() }
+                    partCounts[senderLabel] = (partCounts[senderLabel] ?: 0) + 1
+                    AppLog.i(context, "ПРИЁМ", "Получено SMS (${messageBody.length} симв.): ${messageBody.take(40)}", ref, sender)
 
                     // Отменяем предыдущий таймер, чтобы перезапустить
                     pendingRunnables[senderLabel]?.let {
@@ -214,14 +236,21 @@ class SMSReceiver : BroadcastReceiver() {
     // Собирает полное сообщение из частей и отправляет
     private fun sendCompleteMessage(context: Context, sender: String, senderLabel: String) {
         val fullMessage = messageBuffer[senderLabel]?.joinToString("") ?: ""
+        val ref = messageRefs.remove(senderLabel) ?: AppLog.newRef()
+        val parts = partCounts.remove(senderLabel) ?: 1
         if (fullMessage.isNotEmpty()) {
-            processAndSendMessage(context, sender, fullMessage, senderLabel)
+            if (parts > 1) {
+                AppLog.i(context, "СБОРКА", "Сообщение собрано из $parts частей, ${fullMessage.length} симв.", ref, sender)
+            }
+            processAndSendMessage(context, sender, fullMessage, senderLabel, ref)
             messageBuffer.remove(senderLabel)
+        } else {
+            AppLog.w(context, "СБОРКА", "Пустое сообщение, пересылка пропущена", ref, sender)
         }
     }
 
     // Основная логика: форматирование, отправка, работа с очередью
-    private fun processAndSendMessage(context: Context, sender: String, message: String, senderLabel: String) {
+    private fun processAndSendMessage(context: Context, sender: String, message: String, senderLabel: String, ref: String) {
 
         val dbHelper = DatabaseHelper(context)
         val phone = Functions.normalizePhoneNumber(sender)
@@ -238,14 +267,24 @@ class SMSReceiver : BroadcastReceiver() {
             "📬 $senderLabel\n$message"
         }
 
+        if (userIds.isEmpty()) {
+            AppLog.w(context, "ФИЛЬТР", "Нет фильтра для номера отправителя — сообщение не пересылается", ref, sender)
+        }
+
         // Отправляем сообщение для каждого активного фильтра
         for (userId in userIds) {
             val userData = dbHelper.getFilterDataByUserId(userId)
             val isActive = userData?.third == 1L
 
+            if (!isActive) {
+                AppLog.w(context, "ФИЛЬТР", "Фильтр отключён (id $userId) — сообщение не пересылается", ref, sender)
+            }
+
             if (isActive) {
                 val maxConfig = dbHelper.getMaxConfigByUserId(userId)
-                if (maxConfig != null) {
+                if (maxConfig == null) {
+                    AppLog.e(context, "ФИЛЬТР", "У фильтра (id $userId) нет настроек MAX/GREEN-API", ref, sender)
+                } else {
                     val result = sendToMax(
                         context = context,
                         message = formattedText,
@@ -258,18 +297,21 @@ class SMSReceiver : BroadcastReceiver() {
                         is SendResult.Success -> {
                             Log.d(TAG, "✅ Принято GREEN-API в очередь: ${maxConfig.chatId}, idMessage=${result.idMessage}")
                             // Запоминаем, чтобы позже проверить реальный статус доставки
+                            AppLog.i(context, "ОТПРАВКА", "Принято GREEN-API (idMessage ${result.idMessage}), чат ${maxConfig.chatId}", ref, sender)
                             if (result.idMessage != null) {
                                 pendingStatusChecks[result.idMessage] = PendingStatusCheck(
                                     chatId = maxConfig.chatId,
                                     idInstance = maxConfig.idInstance,
                                     apiToken = maxConfig.apiToken,
-                                    formattedText = formattedText
+                                    formattedText = formattedText,
+                                    ref = ref
                                 )
                             }
                             ensureNotificationPollingStarted(context)
                         }
                         is SendResult.Failed -> {
                             Log.d(TAG, "💾 Сохраняем в очередь (не удалось отправить: ${result.reason})")
+                            AppLog.w(context, "ОТПРАВКА", "Не отправлено: ${result.reason} → сохранено в очередь", ref, sender)
                             dbHelper.saveMessageToQueue(
                                 sender = senderLabel,
                                 messageText = formattedText,
@@ -400,6 +442,22 @@ class SMSReceiver : BroadcastReceiver() {
      * deleteNotification — иначе оно будет возвращаться повторно.
      */
     private fun pollOutgoingStatuses(context: Context) {
+        // Сообщения без финального статуса дольше STATUS_TIMEOUT_MS — пишем в журнал и перестаём ждать
+        try {
+            val nowMs = System.currentTimeMillis()
+            val expired = pendingStatusChecks.filter { nowMs - it.value.createdAt > STATUS_TIMEOUT_MS }
+            for ((expiredId, p) in expired) {
+                AppLog.w(
+                    context, "СТАТУС",
+                    "Доставка не подтверждена за ${STATUS_TIMEOUT_MS / 60000} мин (последний статус: ${p.lastStatus.ifEmpty { "нет" }}), idMessage $expiredId",
+                    p.ref
+                )
+                pendingStatusChecks.remove(expiredId)
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Ошибка проверки просроченных статусов: ${e.message}")
+        }
+
         Log.d(TAG, "🔍 pollOutgoingStatuses: старт, pendingStatusChecks.size=${pendingStatusChecks.size}, ключи=${pendingStatusChecks.keys}")
 
         if (pendingStatusChecks.isEmpty()) {
@@ -480,10 +538,17 @@ class SMSReceiver : BroadcastReceiver() {
                                 when (status) {
                                     "delivered", "read", "sent" -> {
                                         Log.d(TAG, "✅ Подтверждена доставка $idMessage, статус=$status")
+                                        AppLog.i(context, "СТАТУС", "Статус «$status» — сообщение дошло до MAX", pending.ref)
+                                        pendingStatusChecks.remove(idMessage)
+                                    }
+                                    "notInGroup" -> {
+                                        Log.e(TAG, "❌ Сообщение $idMessage: аккаунт GREEN-API не состоит в чате (notInGroup)")
+                                        AppLog.e(context, "СТАТУС", "notInGroup — аккаунт GREEN-API не состоит в чате, сообщение НЕ доставлено", pending.ref)
                                         pendingStatusChecks.remove(idMessage)
                                     }
                                     "failed", "noAccount" -> {
                                         Log.e(TAG, "❌ Сообщение $idMessage реально не доставлено (статус=$status), кладём в очередь на повтор")
+                                        AppLog.e(context, "СТАТУС", "Статус «$status» — не доставлено, возвращено в очередь на повтор", pending.ref)
                                         val dbHelper = DatabaseHelper(context)
                                         dbHelper.saveMessageToQueue(
                                             sender = "(повтор после failed статуса)",
@@ -495,6 +560,7 @@ class SMSReceiver : BroadcastReceiver() {
                                         pendingStatusChecks.remove(idMessage)
                                     }
                                     else -> {
+                                        pending.lastStatus = status
                                         Log.d(TAG, "ℹ️ Промежуточный статус $idMessage: $status")
                                     }
                                 }
@@ -595,6 +661,7 @@ class SMSReceiver : BroadcastReceiver() {
 
                 when (result) {
                     is SendResult.Success -> {
+                        AppLog.i(context, "ОЧЕРЕДЬ", "Отправлено из очереди (создано ${message.getFormattedTime()}, idMessage ${result.idMessage})", "q${message.id}")
                         dbHelper.removeMessageFromQueue(message.id)
                         Log.d(TAG, "✅ Сообщение #${message.id} принято GREEN-API [${message.getFormattedTime()}]")
                         if (result.idMessage != null) {
@@ -602,7 +669,8 @@ class SMSReceiver : BroadcastReceiver() {
                                 chatId = message.chatId,
                                 idInstance = message.idInstance,
                                 apiToken = message.apiToken,
-                                formattedText = messageWithTime
+                                formattedText = messageWithTime,
+                                ref = "q${message.id}"
                             )
                             ensureNotificationPollingStarted(context)
                         }
@@ -613,6 +681,7 @@ class SMSReceiver : BroadcastReceiver() {
                     }
                     is SendResult.Failed -> {
                         dbHelper.incrementRetryCount(message.id)
+                        AppLog.w(context, "ОЧЕРЕДЬ", "Не отправлено из очереди: ${result.reason} (попытка ${message.retryCount + 1}), следующая проверка через 10 мин", "q${message.id}")
                         Log.e(TAG, "❌ Ошибка отправки сообщения #${message.id} (${result.reason}), останавливаем отправку очереди")
                         shouldContinue = false
                     }

@@ -1,64 +1,39 @@
-# Обновление ForwardSMStoMAX: пакет com.semenenko.smstomax
+# Итоговое обновление: пакет, настройки, журнал, импорт/экспорт фильтров
 
-Папка `ForwardSMStoMAX/` повторяет дерево проекта. В ней только изменённые и перенесённые файлы.
-Скопируйте её содержимое в корень проекта с заменой, затем удалите три старые папки и файл из раздела «Что удалить».
+Этот пакет собирает все изменения в одну версию без отладочных вставок. Папка `ForwardSMStoMAX/` повторяет дерево проекта: скопируйте её содержимое в корень проекта с заменой.
 
-## Что изменено
+## Что вошло
+1. **Пакет `com.semenenko.smstomax`.** Для Telegram: поле `maxChatId`, колонка БД `max_chat_id` и миграция БД до версии 6.
+2. **Манифест.** Явные `INTERNET`, `WAKE_LOCK` и `POST_NOTIFICATIONS`.
+3. **Экран «Настройки»** открывается нажатием на шестерёнку в шапке.
+4. **Журнал событий** с хранением 1, 3, 7, 14 или 30 дней и фильтром «Только проблемы».
+5. **Экспорт и импорт фильтров** в JSON.
+6. **Исправлено нажатие на шестерёнку.** Она вынесена из Toolbar на уровень корня экрана. Нажатие на заголовок ничего не открывает.
+7. **Убраны отладочные вставки:** тосты, надпись «сборка 8», логи с тегом `aaa` из диагностики и `CrashCatcher`.
 
-1. **Пространство имён.** `com.example.forwardsmstomax` → `com.semenenko.smstomax`.
-   - Изменены `namespace` и `applicationId` в `app/build.gradle.kts`.
-   - Все исходники перенесены в `app/src/{main,test,androidTest}/java/com/semenenko/smstomax/`.
-   - Заменены строки `package` и импорты. Лишние комментарии в строке `package` убраны.
-2. **Упоминания Telegram убраны.**
-   - Колонка БД `users.telega_user_id` стала `users.max_chat_id`.
-   - Поле `FilterData.telegramUserId` стало `maxChatId`.
-   - Метод `getTelegramDataByUserId()` стал `getFilterDataByUserId()`.
-   - Удалены функция `openTelegramBot()` и неиспользуемые поля `idUserEditText` и `apiTockenEditText` из `MainActivity`.
-   - Стили `Theme.ForwardSMStoTelegram.*` стали `Theme.ForwardSMStoMAX.*`.
-   - Удалён неиспользуемый ресурс `drawable/telegram.xml`.
-   - Очищены комментарии в `strings.xml`, `dialog_filter.xml` и исходниках.
-   - Единственное оставшееся упоминание — константа `COLUMN_LEGACY_CHAT_ID = "telega_user_id"` в `DatabaseHelper.kt`. Она нужна только миграции, которая читает старую колонку.
-3. **Миграция БД 5 → 6** (`DATABASE_VERSION = 6`).
-   - Таблица `users` пересоздаётся с колонкой `max_chat_id`, данные копируются.
-   - Так сделано потому, что `RENAME COLUMN` не работает на Android 8–10 (minSdk = 26).
-   - Цепочка миграций 4 → 5 → 6 теперь работает последовательно. Раньше на версии 5 срабатывала ветка «пересоздать БД».
-   - SQL проверен на SQLite, строки и связанные таблицы сохраняются.
-4. **Манифест.** Явно объявлены `INTERNET` и `WAKE_LOCK`. Теперь приложение не зависит от того, что разрешения приходят транзитивно через `firebase-messaging`.
-   - Дополнительно объявлено `POST_NOTIFICATIONS`. Код запрашивает его в рантайме (Android 13+), но в манифесте оно не было указано, и система отклоняла запрос.
-   - Зависимость `firebase-messaging-ktx` не удалялась. Теперь её можно убрать отдельным коммитом.
-
-## Что удалить вручную (старые файлы остаются при копировании)
-
+## Что удалить вручную (старые файлы не исчезают при копировании)
 ```
-app/src/main/java/com/example/
-app/src/test/java/com/example/
-app/src/androidTest/java/com/example/
+app/src/main/java/com/semenenko/smstomax/CrashCatcher.kt
 app/src/main/res/drawable/telegram.xml
 ```
+Если остались старые папки `app/src/{main,test,androidTest}/java/com/example/`, удалите и их.
 
-Если после этого каталог `com/example` пуст, удалите его целиком.
+## Заголовок
+В `activity_main.xml` заголовок снова «Пересылка SMS в MAX» (сейчас у вас в нём «ТЕСТ 1»). Название приложения в `strings.xml` остаётся «sms › max».
 
-## Применение
+## Не коммитьте
+Папки `build`, `.gradle`, `.idea` и файл `local.properties` не нужны в репозитории. Проверьте, что они указаны в `.gitignore`.
 
-1. Закройте Android Studio и скопируйте содержимое `ForwardSMStoMAX/` в корень проекта с заменой.
-2. Удалите старые файлы из списка выше.
-3. Откройте проект и выполните **File → Sync Project with Gradle Files**, затем **Build → Clean Project** и **Rebuild Project**.
-4. Удалите со смартфона старую версию приложения (`com.example.forwardsmstomax`).
-   - Теперь это другое приложение с новым `applicationId`.
-   - Фильтры и настройки GREEN-API придётся ввести заново, потому что БД старого приложения не переносится.
-5. Коммит:
-
+## Коммит
 ```
 git status
 git add .
-git commit -m "Пакет com.semenenko.smstomax, удалены упоминания Telegram (БД v6), явные INTERNET/WAKE_LOCK/POST_NOTIFICATIONS в манифесте"
+git commit -m "Пакет com.semenenko.smstomax, удалены упоминания Telegram, настройки, журнал событий, импорт/экспорт фильтров"
 git push
 ```
 
-`git add .` увидит переименования и удаления как перемещения файлов, и история сохранится.
+## Установка нового приложения на телефон
+Это отдельное приложение с другим `applicationId`. Старое (`com.example.forwardsmstomax`) работает независимо. Чтобы не получать дубли сообщений в группе, не включайте в новом приложении те же фильтры, пока старое не удалено.
 
-## Проверка
-
-- В проекте не осталось `com.example` и `telegram` (без учёта регистра), кроме `COLUMN_LEGACY_CHAT_ID` для миграции.
-- Миграция SQL проверена на тестовой БД.
-- Полную сборку в Android Studio я не запускал: в моём окружении нет Android SDK. Если после синхронизации появится ошибка, пришлите её текст.
+## Если Gradle снова «не видит» изменений
+Закройте Android Studio, удалите папки `app/build`, `build` и `.gradle`, откройте проект и нажмите Sync, затем Run. Если проблема повторится, добавьте в `gradle.properties` строку `org.gradle.vfs.watch=false`.
