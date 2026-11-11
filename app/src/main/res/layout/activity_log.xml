@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/colorPrimaryVariant"
@@ -75,25 +76,34 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:padding="8dp">
+            android:paddingStart="16dp"
+            android:paddingTop="8dp"
+            android:paddingEnd="16dp"
+            android:paddingBottom="16dp">
 
             <Button
                 android:id="@+id/btn_save_log"
-                style="@style/Widget.MaterialComponents.Button.TextButton"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
+                android:layout_height="52dp"
+                android:layout_marginEnd="6dp"
                 android:layout_weight="1"
-                android:text="Сохранить в файл"
-                android:textColor="@color/colorPrimaryVariant" />
+                android:text="Сохранить"
+                android:textColor="#2E7D5B"
+                app:strokeColor="#2E7D5B"
+                app:strokeWidth="2dp" />
 
             <Button
                 android:id="@+id/btn_clear_log"
-                style="@style/Widget.MaterialComponents.Button.TextButton"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
+                android:layout_height="52dp"
+                android:layout_marginStart="6dp"
                 android:layout_weight="1"
                 android:text="Очистить"
-                android:textColor="@color/colorPrimaryVariant" />
+                android:textColor="#D32F2F"
+                app:strokeColor="#D32F2F"
+                app:strokeWidth="2dp" />
         </LinearLayout>
     </LinearLayout>
 </LinearLayout>

@@ -2,6 +2,7 @@
 package com.semenenko.smstomax.sms
 
 import com.semenenko.smstomax.data.DatabaseHelper
+import com.semenenko.smstomax.data.QueuedMessage
 import com.semenenko.smstomax.util.AppLog
 import com.semenenko.smstomax.util.Functions
 import android.annotation.SuppressLint
@@ -88,6 +89,30 @@ class SMSReceiver : BroadcastReceiver() {
         // Ключ: "sender::messageBody", значение: время получения (мс)
         private val recentlyProcessed = mutableMapOf<String, Long>()
         private const val DEDUP_WINDOW_MS = 15_000L // 15 секунд
+
+        // --- Объединение сообщений в одно ---
+        // Первое пришедшее SMS открывает окно BATCH_WINDOW_MS. Все сообщения, которые
+        // успели обработаться за это время, группируются по получателю (чат + инстанс +
+        // токен) и уходят ОДНИМ сообщением, между исходными — пустая строка.
+        // В то же отправление добавляются и сообщения этого получателя из очереди.
+        private const val BATCH_WINDOW_MS = 60_000L // 30_000L
+        private const val BATCH_SEPARATOR = "\n\n"
+        private const val MAX_BATCH_CHARS = 15_000 // лимит GREEN-API на сообщение — 20000 символов
+        private var batchFlushRunnable: Runnable? = null
+        private var batchWindowStart = 0L
+
+        internal data class Destination(val chatId: String, val idInstance: String, val apiToken: String)
+        internal data class BatchItem(val text: String, val sender: String, val senderLabel: String, val ref: String)
+        private val batchItems = LinkedHashMap<Destination, MutableList<BatchItem>>()
+
+        // Одна запись в отправляемом пакете: новое SMS (queued == null) или сообщение из очереди
+        internal data class Entry(
+            val text: String,
+            val ref: String,
+            val sender: String,
+            val senderLabel: String,
+            val queued: QueuedMessage?
+        )
 
         // --- Опрос статусов отправленных сообщений ---
         private val notificationPollHandler = Handler(Looper.getMainLooper())
@@ -179,6 +204,9 @@ class SMSReceiver : BroadcastReceiver() {
                         val cutoff = now - DEDUP_WINDOW_MS
                         recentlyProcessed.entries.removeAll { it.value < cutoff }
                     }
+
+                    // Первое SMS открывает окно объединения сообщений
+                    openBatchWindow(context)
 
                     // Получаем имя контакта, если номер есть в адресной книге
                     var contactName = getContactName(context, sender)
@@ -274,7 +302,8 @@ class SMSReceiver : BroadcastReceiver() {
             AppLog.w(context, "ФИЛЬТР", "Нет фильтра для номера отправителя — сообщение не пересылается", ref, sender)
         }
 
-        // Отправляем сообщение для каждого активного фильтра
+        // Сообщение не отправляется сразу: для каждого активного фильтра оно
+        // кладётся в пакет получателя и уйдёт вместе с остальными при закрытии окна
         for (userId in userIds) {
             val userData = dbHelper.getFilterDataByUserId(userId)
             val isActive = userData?.third == 1L
@@ -288,51 +317,143 @@ class SMSReceiver : BroadcastReceiver() {
                 if (maxConfig == null) {
                     AppLog.e(context, "ФИЛЬТР", "У фильтра (id $userId) нет настроек MAX/GREEN-API", ref, sender)
                 } else {
-                    val result = sendToMax(
-                        context = context,
-                        message = formattedText,
-                        chatId = maxConfig.chatId,
-                        idInstance = maxConfig.idInstance,
-                        apiToken = maxConfig.apiToken
-                    )
-
-                    when (result) {
-                        is SendResult.Success -> {
-                            Log.d(TAG, "✅ Принято GREEN-API в очередь: ${maxConfig.chatId}, idMessage=${result.idMessage}")
-                            // Запоминаем, чтобы позже проверить реальный статус доставки
-                            AppLog.i(context, "ОТПРАВКА", "Принято GREEN-API (idMessage ${result.idMessage}), чат ${maxConfig.chatId}", ref, sender)
-                            if (result.idMessage != null) {
-                                pendingStatusChecks[result.idMessage] = PendingStatusCheck(
-                                    chatId = maxConfig.chatId,
-                                    idInstance = maxConfig.idInstance,
-                                    apiToken = maxConfig.apiToken,
-                                    formattedText = formattedText,
-                                    ref = ref
-                                )
-                            }
-                            ensureNotificationPollingStarted(context)
-                        }
-                        is SendResult.Failed -> {
-                            Log.d(TAG, "💾 Сохраняем в очередь (не удалось отправить: ${result.reason})")
-                            AppLog.w(context, "ОТПРАВКА", "Не отправлено: ${result.reason} → сохранено в очередь", ref, sender)
-                            dbHelper.saveMessageToQueue(
-                                sender = senderLabel,
-                                messageText = formattedText,
-                                chatId = maxConfig.chatId,
-                                idInstance = maxConfig.idInstance,
-                                apiToken = maxConfig.apiToken
-                            )
-                        }
-                    }
+                    val dest = Destination(maxConfig.chatId, maxConfig.idInstance, maxConfig.apiToken)
+                    val list = batchItems.getOrPut(dest) { mutableListOf() }
+                    list.add(BatchItem(formattedText, sender, senderLabel, ref))
+                    AppLog.i(context, "ПАКЕТ", "Добавлено в пакет для чата ${dest.chatId} (сообщений в пакете: ${list.size})", ref, sender)
                 }
             }
         }
 
-        // Запускаем обработчик очереди через 1 минуту (не сразу),
-        // чтобы новое SMS и отложенные сообщения не шли подряд
+        // Окно должно быть открыто (на случай, если его закрыли раньше, чем собралась последняя часть SMS)
+        openBatchWindow(context, delayMs = 1_000L)
+    }
+
+    /** Открывает окно объединения, если оно ещё не открыто. Закрытие — через delayMs от первого SMS. */
+    private fun openBatchWindow(context: Context, delayMs: Long = BATCH_WINDOW_MS) {
+        if (batchFlushRunnable != null) return
+        batchWindowStart = System.currentTimeMillis()
+        val runnable = object : Runnable {
+            override fun run() {
+                // Если какое-то SMS ещё собирается из частей — подождём, чтобы оно попало в пакет
+                val waited = System.currentTimeMillis() - batchWindowStart
+                if (pendingRunnables.isNotEmpty() && waited < BATCH_WINDOW_MS + 10_000L) {
+                    handler.postDelayed(this, 2_000L)
+                    return
+                }
+                batchFlushRunnable = null
+                flushBatches(context)
+            }
+        }
+        batchFlushRunnable = runnable
+        handler.postDelayed(runnable, delayMs)
+    }
+
+    /** Закрывает окно: отправляет по одному сообщению на каждого получателя (вместе с его очередью). */
+    private fun flushBatches(context: Context) {
+        val snapshot = LinkedHashMap(batchItems)
+        batchItems.clear()
+
+        if (snapshot.isNotEmpty()) {
+            val dbHelper = DatabaseHelper(context)
+            // Если очередь сейчас обрабатывается фоновым потоком — её сообщения не трогаем, чтобы не отправить дважды
+            val queued = if (isProcessingQueue) emptyList<QueuedMessage>() else dbHelper.getAllQueuedMessages()
+            for ((dest, items) in snapshot) {
+                val mine = queued.filter {
+                    it.chatId == dest.chatId && it.idInstance == dest.idInstance && it.apiToken == dest.apiToken
+                }
+                val entries = mine.map { Entry(it.getMessageWithTimestamp(), "q${it.id}", it.sender, it.sender, it) } +
+                        items.map { Entry(it.text, it.ref, it.sender, it.senderLabel, null) }
+                sendEntries(context, dbHelper, dest, entries)
+            }
+        }
+
+        // Остальную очередь проверяем через минуту
         handler.postDelayed({
             startQueueProcessor(context)
         }, 60 * 1000)
+    }
+
+    /** Режет список на пакеты так, чтобы текст каждого не превышал MAX_BATCH_CHARS. */
+    private fun chunkEntries(entries: List<Entry>): List<List<Entry>> {
+        val chunks = mutableListOf<MutableList<Entry>>()
+        var len = 0
+        for (e in entries) {
+            val add = e.text.length + BATCH_SEPARATOR.length
+            if (chunks.isEmpty() || (len + add > MAX_BATCH_CHARS && chunks.last().isNotEmpty())) {
+                chunks.add(mutableListOf())
+                len = 0
+            }
+            chunks.last().add(e)
+            len += add
+        }
+        return chunks
+    }
+
+    /** Отправляет записи одного получателя одним сообщением (или несколькими, если очень длинно). */
+    private fun sendEntries(context: Context, dbHelper: DatabaseHelper, dest: Destination, entries: List<Entry>) {
+        var failed = false
+        for (chunk in chunkEntries(entries)) {
+            val fromQueue = chunk.count { it.queued != null }
+            if (!failed) {
+                val combined = chunk.joinToString(BATCH_SEPARATOR) { it.text }
+                val result = sendToMax(
+                    context = context,
+                    message = combined,
+                    chatId = dest.chatId,
+                    idInstance = dest.idInstance,
+                    apiToken = dest.apiToken
+                )
+                when (result) {
+                    is SendResult.Success -> {
+                        Log.d(TAG, "✅ Пакет из ${chunk.size} сообщ. принят GREEN-API: ${dest.chatId}, idMessage=${result.idMessage}")
+                        for (e in chunk) {
+                            AppLog.i(
+                                context, "ОТПРАВКА",
+                                "Принято GREEN-API (idMessage ${result.idMessage}), чат ${dest.chatId}, в пакете сообщений: ${chunk.size}" +
+                                        (if (e.queued != null) " [из очереди]" else ""),
+                                e.ref, e.sender
+                            )
+                            e.queued?.let { dbHelper.removeMessageFromQueue(it.id) }
+                        }
+                        if (result.idMessage != null) {
+                            pendingStatusChecks[result.idMessage] = PendingStatusCheck(
+                                chatId = dest.chatId,
+                                idInstance = dest.idInstance,
+                                apiToken = dest.apiToken,
+                                formattedText = combined,
+                                ref = chunk.first().ref
+                            )
+                        }
+                        ensureNotificationPollingStarted(context)
+                        continue
+                    }
+                    is SendResult.Failed -> {
+                        failed = true
+                        AppLog.w(
+                            context, "ОТПРАВКА",
+                            "Пакет из ${chunk.size} сообщ. не отправлен: ${result.reason} (из очереди: $fromQueue)",
+                            chunk.first().ref, chunk.first().sender
+                        )
+                    }
+                }
+            }
+            // Не отправлено: новые сообщения сохраняем в очередь (по одному), у старых растёт счётчик попыток
+            for (e in chunk) {
+                if (e.queued != null) {
+                    dbHelper.incrementRetryCount(e.queued.id)
+                } else {
+                    dbHelper.saveMessageToQueue(
+                        sender = e.senderLabel,
+                        messageText = e.text,
+                        chatId = dest.chatId,
+                        idInstance = dest.idInstance,
+                        apiToken = dest.apiToken
+                    )
+                    AppLog.w(context, "ОТПРАВКА", "Сохранено в очередь, будет отправлено позже", e.ref, e.sender)
+                }
+            }
+        }
     }
 
     private sealed class SendResult {
@@ -647,45 +768,58 @@ class SMSReceiver : BroadcastReceiver() {
         Thread {
             var shouldContinue = true
 
-            for ((index, message) in pendingMessages.withIndex()) {
+            // Сообщения одного получателя отправляем одним сообщением (пустая строка между ними)
+            val groups = pendingMessages.groupBy { Destination(it.chatId, it.idInstance, it.apiToken) }
+            val chunks = groups.flatMap { (dest, list) ->
+                chunkEntries(list.map { Entry(it.getMessageWithTimestamp(), "q${it.id}", it.sender, it.sender, it) })
+                    .map { dest to it }
+            }
+
+            for ((index, pair) in chunks.withIndex()) {
                 if (!shouldContinue) break
+                val (dest, chunk) = pair
+                val combined = chunk.joinToString(BATCH_SEPARATOR) { it.text }
 
-                val messageWithTime = message.getMessageWithTimestamp()
-
-                Log.d(TAG, "Отправка сообщения #${message.id} (попытка ${message.retryCount + 1})")
+                Log.d(TAG, "Отправка из очереди: ${chunk.size} сообщ. одним пакетом")
 
                 val result = sendToMax(
                     context = context,
-                    message = messageWithTime,
-                    chatId = message.chatId,
-                    idInstance = message.idInstance,
-                    apiToken = message.apiToken
+                    message = combined,
+                    chatId = dest.chatId,
+                    idInstance = dest.idInstance,
+                    apiToken = dest.apiToken
                 )
 
                 when (result) {
                     is SendResult.Success -> {
-                        AppLog.i(context, "ОЧЕРЕДЬ", "Отправлено из очереди (создано ${message.getFormattedTime()}, idMessage ${result.idMessage})", "q${message.id}")
-                        dbHelper.removeMessageFromQueue(message.id)
-                        Log.d(TAG, "✅ Сообщение #${message.id} принято GREEN-API [${message.getFormattedTime()}]")
+                        for (e in chunk) {
+                            val q = e.queued!!
+                            AppLog.i(context, "ОЧЕРЕДЬ", "Отправлено из очереди (создано ${q.getFormattedTime()}, idMessage ${result.idMessage}, в пакете сообщений: ${chunk.size})", e.ref)
+                            dbHelper.removeMessageFromQueue(q.id)
+                        }
+                        Log.d(TAG, "✅ Пакет из очереди (${chunk.size} сообщ.) принят GREEN-API")
                         if (result.idMessage != null) {
                             pendingStatusChecks[result.idMessage] = PendingStatusCheck(
-                                chatId = message.chatId,
-                                idInstance = message.idInstance,
-                                apiToken = message.apiToken,
-                                formattedText = messageWithTime,
-                                ref = "q${message.id}"
+                                chatId = dest.chatId,
+                                idInstance = dest.idInstance,
+                                apiToken = dest.apiToken,
+                                formattedText = combined,
+                                ref = chunk.first().ref
                             )
                             ensureNotificationPollingStarted(context)
                         }
 
-                        if (index < pendingMessages.size - 1) {
+                        if (index < chunks.size - 1) {
                             Thread.sleep(30000)
                         }
                     }
                     is SendResult.Failed -> {
-                        dbHelper.incrementRetryCount(message.id)
-                        AppLog.w(context, "ОЧЕРЕДЬ", "Не отправлено из очереди: ${result.reason} (попытка ${message.retryCount + 1}), следующая проверка через 10 мин", "q${message.id}")
-                        Log.e(TAG, "❌ Ошибка отправки сообщения #${message.id} (${result.reason}), останавливаем отправку очереди")
+                        for (e in chunk) {
+                            val q = e.queued!!
+                            dbHelper.incrementRetryCount(q.id)
+                            AppLog.w(context, "ОЧЕРЕДЬ", "Не отправлено из очереди: ${result.reason} (попытка ${q.retryCount + 1}), следующая проверка через 10 мин", e.ref)
+                        }
+                        Log.e(TAG, "❌ Ошибка отправки пакета из очереди (${result.reason}), останавливаем отправку очереди")
                         shouldContinue = false
                     }
                 }

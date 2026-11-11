@@ -58,7 +58,7 @@ class SettingsActivity : AppCompatActivity() {
                     Toast.makeText(this, "Журнал очищен", Toast.LENGTH_SHORT).show()
                 }
                 .setNegativeButton("Отмена", null)
-                .show()
+                .create().also { DialogStyle.decorate(it, setOf(AlertDialog.BUTTON_POSITIVE)) }.show()
         }
 
         // ----- Фильтры -----
@@ -105,7 +105,7 @@ class SettingsActivity : AppCompatActivity() {
                 dialog.dismiss()
             }
             .setNegativeButton("Отмена", null)
-            .show()
+            .create().also { DialogStyle.decorate(it) }.show()
     }
 
     // ==================== Экспорт / импорт фильтров ====================
@@ -127,7 +127,7 @@ class SettingsActivity : AppCompatActivity() {
                 startActivityForResult(intent, REQ_EXPORT_FILTERS)
             }
             .setNegativeButton("Отмена", null)
-            .show()
+            .create().also { DialogStyle.decorate(it) }.show()
     }
 
     private fun startImport() {
@@ -178,7 +178,7 @@ class SettingsActivity : AppCompatActivity() {
                     .setPositiveButton("Добавить") { _, _ -> runImport(json, false) }
                     .setNeutralButton("Заменить все") { _, _ -> runImport(json, true) }
                     .setNegativeButton("Отмена", null)
-                    .show()
+                    .create().also { DialogStyle.decorate(it, setOf(AlertDialog.BUTTON_NEUTRAL)) }.show()
             }
         }
     }

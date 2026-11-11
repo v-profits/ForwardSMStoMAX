@@ -111,7 +111,8 @@
 
                 <TextView
                     style="@style/SettingsTitle"
-                    android:text="Очистить журнал" />
+                    android:text="Очистить журнал"
+                    android:textColor="#D32F2F" />
 
                 <TextView
                     style="@style/SettingsSubtitle"

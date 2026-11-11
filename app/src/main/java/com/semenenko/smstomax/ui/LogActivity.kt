@@ -58,7 +58,7 @@ class LogActivity : AppCompatActivity() {
                     load()
                 }
                 .setNegativeButton("Отмена", null)
-                .show()
+                .create().also { DialogStyle.decorate(it, setOf(AlertDialog.BUTTON_POSITIVE)) }.show()
         }
 
         findViewById<View>(R.id.btn_save_log).setOnClickListener {
