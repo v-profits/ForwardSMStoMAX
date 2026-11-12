@@ -6,6 +6,8 @@ import com.semenenko.smstomax.data.QueuedMessage
 import com.semenenko.smstomax.util.AppLog
 import com.semenenko.smstomax.util.Functions
 import android.annotation.SuppressLint
+import android.app.AlarmManager
+import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -19,6 +21,8 @@ import android.util.Log
 import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.Executors
 
 /**
  * ВНЕСЁННЫЕ ИСПРАВЛЕНИЯ (см. пояснения в коде по месту):
@@ -81,7 +85,7 @@ class SMSReceiver : BroadcastReceiver() {
         // Через сколько мс без финального статуса запись о сообщении считается «не подтверждённой»
         private const val STATUS_TIMEOUT_MS = 15 * 60 * 1000L
 
-        private var isProcessingQueue = false
+        @Volatile private var isProcessingQueue = false
         private val queueCheckHandler = Handler(Looper.getMainLooper())
         private var queueCheckRunnable: Runnable? = null
 
@@ -95,15 +99,28 @@ class SMSReceiver : BroadcastReceiver() {
         // успели обработаться за это время, группируются по получателю (чат + инстанс +
         // токен) и уходят ОДНИМ сообщением, между исходными — пустая строка.
         // В то же отправление добавляются и сообщения этого получателя из очереди.
-        private const val BATCH_WINDOW_MS = 60_000L // 30_000L
+        private const val BATCH_WINDOW_MS = 30_000L
         private const val BATCH_SEPARATOR = "\n\n"
         private const val MAX_BATCH_CHARS = 15_000 // лимит GREEN-API на сообщение — 20000 символов
         private var batchFlushRunnable: Runnable? = null
         private var batchWindowStart = 0L
 
+        // Сообщения пакета сразу кладутся в БД (таблица очереди), поэтому не теряются, даже если
+        // процесс выгрузят до закрытия окна. Закрытие окна страхуется будильником (AlarmManager)
+        // и wake lock'ом, а сама отправка идёт в фоновом потоке, а не на главном.
+        const val ACTION_FLUSH_BATCH = "com.semenenko.smstomax.FLUSH_BATCH"
+        private const val FLUSH_ALARM_REQUEST = 7001
+        private const val FLUSH_ALARM_EXTRA_DELAY_MS = 8_000L // будильник срабатывает позже штатного таймера
+        private const val BATCH_WAKELOCK_MS = 120_000L
+        private const val OLD_MESSAGE_MS = 120_000L // старше — считается «из очереди» и получает пометку 🔄
+        private const val QUEUE_SKIP_YOUNG_MS = 45_000L // свежие записи фоновая очередь не трогает: их отправит пакет
+        private const val FLUSH_MAX_DEFERRALS = 6
+        private val sendWorker = Executors.newSingleThreadExecutor()
+        private val pollWorker = Executors.newSingleThreadExecutor()
+        private val batchRefs = ConcurrentHashMap<Long, String>() // id записи очереди -> код сообщения в журнале
+        private var batchWakeLock: PowerManager.WakeLock? = null
+
         internal data class Destination(val chatId: String, val idInstance: String, val apiToken: String)
-        internal data class BatchItem(val text: String, val sender: String, val senderLabel: String, val ref: String)
-        private val batchItems = LinkedHashMap<Destination, MutableList<BatchItem>>()
 
         // Одна запись в отправляемом пакете: новое SMS (queued == null) или сообщение из очереди
         internal data class Entry(
@@ -131,7 +148,7 @@ class SMSReceiver : BroadcastReceiver() {
             val createdAt: Long = System.currentTimeMillis(),
             var lastStatus: String = ""
         )
-        private val pendingStatusChecks = mutableMapOf<String, PendingStatusCheck>()
+        private val pendingStatusChecks = ConcurrentHashMap<String, PendingStatusCheck>()
 
         // Коды, которые считаем временными сбоями инфраструктуры GREEN-API —
         // имеет смысл быстро повторить запрос, а не ждать полные 2 минуты.
@@ -318,9 +335,16 @@ class SMSReceiver : BroadcastReceiver() {
                     AppLog.e(context, "ФИЛЬТР", "У фильтра (id $userId) нет настроек MAX/GREEN-API", ref, sender)
                 } else {
                     val dest = Destination(maxConfig.chatId, maxConfig.idInstance, maxConfig.apiToken)
-                    val list = batchItems.getOrPut(dest) { mutableListOf() }
-                    list.add(BatchItem(formattedText, sender, senderLabel, ref))
-                    AppLog.i(context, "ПАКЕТ", "Добавлено в пакет для чата ${dest.chatId} (сообщений в пакете: ${list.size})", ref, sender)
+                    // Сначала в БД — только потом ждём окно: так сообщение не пропадёт при выгрузке процесса
+                    val qid = dbHelper.saveMessageToQueue(
+                        sender = senderLabel,
+                        messageText = formattedText,
+                        chatId = dest.chatId,
+                        idInstance = dest.idInstance,
+                        apiToken = dest.apiToken
+                    )
+                    batchRefs[qid] = ref
+                    AppLog.i(context, "ПАКЕТ", "Сохранено в БД и добавлено в пакет для чата ${dest.chatId} (запись $qid)", ref, sender)
                 }
             }
         }
@@ -333,6 +357,8 @@ class SMSReceiver : BroadcastReceiver() {
     private fun openBatchWindow(context: Context, delayMs: Long = BATCH_WINDOW_MS) {
         if (batchFlushRunnable != null) return
         batchWindowStart = System.currentTimeMillis()
+        acquireBatchWakeLock(context)
+        scheduleFlushAlarm(context, delayMs)
         val runnable = object : Runnable {
             override fun run() {
                 // Если какое-то SMS ещё собирается из частей — подождём, чтобы оно попало в пакет
@@ -342,28 +368,121 @@ class SMSReceiver : BroadcastReceiver() {
                     return
                 }
                 batchFlushRunnable = null
-                flushBatches(context)
+                requestFlush(context)
             }
         }
         batchFlushRunnable = runnable
         handler.postDelayed(runnable, delayMs)
     }
 
-    /** Закрывает окно: отправляет по одному сообщению на каждого получателя (вместе с его очередью). */
-    private fun flushBatches(context: Context) {
-        val snapshot = LinkedHashMap(batchItems)
-        batchItems.clear()
+    private fun acquireBatchWakeLock(context: Context) {
+        try {
+            if (batchWakeLock?.isHeld == true) return
+            val pm = context.applicationContext.getSystemService(Context.POWER_SERVICE) as? PowerManager
+            batchWakeLock = pm?.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "ForwardSmsToMax:batch")?.also {
+                it.setReferenceCounted(false)
+                it.acquire(BATCH_WAKELOCK_MS)
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Не удалось взять WakeLock для пакета: ${e.message}")
+        }
+    }
 
-        if (snapshot.isNotEmpty()) {
-            val dbHelper = DatabaseHelper(context)
-            // Если очередь сейчас обрабатывается фоновым потоком — её сообщения не трогаем, чтобы не отправить дважды
-            val queued = if (isProcessingQueue) emptyList<QueuedMessage>() else dbHelper.getAllQueuedMessages()
-            for ((dest, items) in snapshot) {
-                val mine = queued.filter {
-                    it.chatId == dest.chatId && it.idInstance == dest.idInstance && it.apiToken == dest.apiToken
+    private fun releaseBatchWakeLock() {
+        try {
+            if (batchWakeLock?.isHeld == true) batchWakeLock?.release()
+        } catch (e: Exception) {
+            Log.e(TAG, "Не удалось освободить WakeLock пакета: ${e.message}")
+        }
+    }
+
+    private fun flushPendingIntent(context: Context): PendingIntent {
+        val intent = Intent(context, BatchAlarmReceiver::class.java).setAction(ACTION_FLUSH_BATCH)
+        return PendingIntent.getBroadcast(
+            context.applicationContext, FLUSH_ALARM_REQUEST, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+    }
+
+    /** Резервное закрытие окна: сработает, даже если таймер Handler «заснул» или процесс был выгружен. */
+    private fun scheduleFlushAlarm(context: Context, delayMs: Long) {
+        try {
+            val am = context.applicationContext.getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
+            am.setAndAllowWhileIdle(
+                AlarmManager.RTC_WAKEUP,
+                System.currentTimeMillis() + delayMs + FLUSH_ALARM_EXTRA_DELAY_MS,
+                flushPendingIntent(context)
+            )
+        } catch (e: Exception) {
+            Log.e(TAG, "Не удалось поставить резервный будильник: ${e.message}")
+            AppLog.w(context, "СИСТЕМА", "Резервный будильник отправки не поставлен: ${e.message}")
+        }
+    }
+
+    private fun cancelFlushAlarm(context: Context) {
+        try {
+            (context.applicationContext.getSystemService(Context.ALARM_SERVICE) as? AlarmManager)
+                ?.cancel(flushPendingIntent(context))
+        } catch (e: Exception) {
+            Log.e(TAG, "Не удалось снять будильник: ${e.message}")
+        }
+    }
+
+    /** Вызывается из BatchAlarmReceiver, когда штатный таймер не успел. Безопасно вызывать повторно. */
+    fun flushFromAlarm(context: Context) {
+        val app = context.applicationContext
+        val timer = batchFlushRunnable
+        if (timer != null) {
+            handler.removeCallbacks(timer)
+            batchFlushRunnable = null
+            AppLog.w(app, "ПАКЕТ", "Окно закрыто резервным будильником (таймер не сработал вовремя)")
+        } else {
+            AppLog.w(app, "ПАКЕТ", "Отправка запущена будильником (процесс был перезапущен или таймер потерян)")
+        }
+        acquireBatchWakeLock(app)
+        requestFlush(app, deferrals = FLUSH_MAX_DEFERRALS)
+    }
+
+    /** Передаёт закрытие окна фоновому потоку: сеть не должна блокировать главный поток. */
+    private fun requestFlush(context: Context, deferrals: Int = 0) {
+        val app = context.applicationContext
+        cancelFlushAlarm(app)
+        sendWorker.execute {
+            try {
+                flushBatches(app, deferrals)
+            } catch (e: Exception) {
+                Log.e(TAG, "Ошибка отправки пакета: ${e.message}", e)
+                AppLog.e(app, "ОТПРАВКА", "Ошибка при отправке пакета: ${e.message}")
+            } finally {
+                releaseBatchWakeLock()
+            }
+        }
+    }
+
+    /** Закрывает окно: берёт сообщения из БД и отправляет по одному сообщению на каждого получателя. */
+    private fun flushBatches(context: Context, deferrals: Int) {
+        val dbHelper = DatabaseHelper(context)
+
+        // Очередь обрабатывается фоновым потоком — подождём, чтобы не отправить одно и то же дважды
+        var waited = 0
+        while (isProcessingQueue && waited < FLUSH_MAX_DEFERRALS && deferrals < FLUSH_MAX_DEFERRALS) {
+            Thread.sleep(15_000L)
+            waited++
+        }
+
+        val queued = dbHelper.getAllQueuedMessages()
+        if (queued.isNotEmpty()) {
+            val now = System.currentTimeMillis()
+            val groups = queued.groupBy { Destination(it.chatId, it.idInstance, it.apiToken) }
+            for ((dest, list) in groups) {
+                val entries = list.sortedBy { it.id }.map {
+                    // Сообщения, которые уже пытались отправить или лежат давно, помечаем 🔄 со временем получения
+                    val old = it.retryCount > 0 || now - it.createdAt > OLD_MESSAGE_MS
+                    Entry(
+                        if (old) it.getMessageWithTimestamp() else it.messageText,
+                        batchRefs[it.id] ?: "q${it.id}", it.sender, it.sender, it
+                    )
                 }
-                val entries = mine.map { Entry(it.getMessageWithTimestamp(), "q${it.id}", it.sender, it.sender, it) } +
-                        items.map { Entry(it.text, it.ref, it.sender, it.senderLabel, null) }
                 sendEntries(context, dbHelper, dest, entries)
             }
         }
@@ -414,7 +533,7 @@ class SMSReceiver : BroadcastReceiver() {
                                         (if (e.queued != null) " [из очереди]" else ""),
                                 e.ref, e.sender
                             )
-                            e.queued?.let { dbHelper.removeMessageFromQueue(it.id) }
+                            e.queued?.let { dbHelper.removeMessageFromQueue(it.id); batchRefs.remove(it.id) }
                         }
                         if (result.idMessage != null) {
                             pendingStatusChecks[result.idMessage] = PendingStatusCheck(
@@ -485,6 +604,33 @@ class SMSReceiver : BroadcastReceiver() {
      * Это НЕ означает подтверждённую доставку — за неё отвечает
      * pollOutgoingStatuses().
      */
+    /**
+     * Ищет среди исходящих сообщений инстанса за последние 15 минут сообщение с таким же текстом.
+     * Нужно, чтобы после таймаута не отправить то, что GREEN-API уже принял. Возвращает idMessage или null.
+     */
+    private fun findRecentOutgoing(host: String, idInstance: String, apiToken: String, chatId: String, text: String): String? {
+        return try {
+            Thread.sleep(3_000L)
+            val c = URL("$host/waInstance$idInstance/lastOutgoingMessages/$apiToken?minutes=15")
+                .openConnection() as HttpURLConnection
+            c.connectTimeout = 10000
+            c.readTimeout = 15000
+            if (c.responseCode !in 200..299) return null
+            val arr = org.json.JSONArray(c.inputStream.bufferedReader().readText())
+            val want = text.trim()
+            for (i in 0 until arr.length()) {
+                val o = arr.getJSONObject(i)
+                if (o.optString("chatId") == chatId && o.optString("textMessage").trim() == want) {
+                    return o.optString("idMessage", "").ifEmpty { null }
+                }
+            }
+            null
+        } catch (e: Exception) {
+            Log.e(TAG, "Не удалось проверить последние исходящие: ${e.message}")
+            null
+        }
+    }
+
     private fun sendToMax(
         context: Context,
         message: String,
@@ -503,8 +649,9 @@ class SMSReceiver : BroadcastReceiver() {
 
         var result: SendResult = SendResult.Failed("не выполнено")
 
-        withWakeLock(context, "send", 20_000L) {
+        withWakeLock(context, "send", 90_000L) {
             result = kotlinx.coroutines.runBlocking(kotlinx.coroutines.Dispatchers.IO) {
+                var requestWritten = false
                 try {
                     Log.d(TAG, "🌐 sendToMax: открываю соединение $url")
                     val connection = URL(url).openConnection() as HttpURLConnection
@@ -512,11 +659,12 @@ class SMSReceiver : BroadcastReceiver() {
                     connection.setRequestProperty("Content-Type", "application/json; charset=utf-8")
                     connection.doOutput = true
                     connection.connectTimeout = 15000
-                    connection.readTimeout = 15000
+                    connection.readTimeout = 30000
 
                     connection.outputStream.use { os ->
                         os.write(jsonBody.toByteArray(Charsets.UTF_8))
                     }
+                    requestWritten = true
 
                     val responseCode = connection.responseCode
                     Log.d(TAG, "📥 sendToMax: получен код ответа $responseCode")
@@ -549,7 +697,20 @@ class SMSReceiver : BroadcastReceiver() {
                     }
                 } catch (e: Exception) {
                     Log.e(TAG, "❌ Исключение при отправке: ${e.message}", e)
-                    SendResult.Failed(e.message ?: "unknown exception")
+                    if (requestWritten) {
+                        // Запрос ушёл, а ответа нет: сервер мог принять сообщение. Прежде чем отправлять
+                        // повторно (и получить дубль), смотрим в последние исходящие сообщения инстанса.
+                        val found = findRecentOutgoing(host, idInstance, apiToken, chatId, message)
+                        if (found != null) {
+                            AppLog.w(context, "ОТПРАВКА", "Ответ GREEN-API не получен (${e.message}), но сообщение найдено среди отправленных (idMessage $found) — повтор не нужен")
+                            SendResult.Success(found)
+                        } else {
+                            AppLog.w(context, "ОТПРАВКА", "Ответ GREEN-API не получен (${e.message}), в отправленных сообщение не найдено — будет повтор")
+                            SendResult.Failed(e.message ?: "unknown exception")
+                        }
+                    } else {
+                        SendResult.Failed(e.message ?: "unknown exception")
+                    }
                 }
             }
         } // конец withWakeLock
@@ -721,7 +882,7 @@ class SMSReceiver : BroadcastReceiver() {
         notificationPollRunnable = object : Runnable {
             override fun run() {
                 Log.d(TAG, "⏰ Сработал плановый опрос статусов (каждые ${NOTIFICATION_POLL_INTERVAL_MS / 1000} сек)")
-                pollOutgoingStatuses(context)
+                pollWorker.execute { try { pollOutgoingStatuses(context) } catch (e: Exception) { Log.e(TAG, "Ошибка опроса статусов: ${e.message}") } }
                 notificationPollHandler.postDelayed(this, NOTIFICATION_POLL_INTERVAL_MS)
             }
         }
@@ -730,7 +891,7 @@ class SMSReceiver : BroadcastReceiver() {
         // дальше — по расписанию каждые NOTIFICATION_POLL_INTERVAL_MS
         notificationPollHandler.postDelayed({
             Log.d(TAG, "⏰ Сработал первый быстрый опрос (20 сек после отправки)")
-            pollOutgoingStatuses(context)
+            pollWorker.execute { try { pollOutgoingStatuses(context) } catch (e: Exception) { Log.e(TAG, "Ошибка опроса статусов: ${e.message}") } }
         }, 20_000L)
         notificationPollHandler.postDelayed(notificationPollRunnable!!, NOTIFICATION_POLL_INTERVAL_MS)
     }
@@ -753,7 +914,9 @@ class SMSReceiver : BroadcastReceiver() {
 
     private fun processQueue(context: Context) {
         val dbHelper = DatabaseHelper(context)
-        val pendingMessages = dbHelper.getAllQueuedMessages()
+        val nowMs = System.currentTimeMillis()
+        // Свежие записи (только что принятые SMS) отправит пакет — фоновая очередь их не трогает
+        val pendingMessages = dbHelper.getAllQueuedMessages().filter { nowMs - it.createdAt > QUEUE_SKIP_YOUNG_MS }
 
         if (pendingMessages.isEmpty()) {
             Log.d(TAG, "📭 Очередь пуста, обработчик останавливается")
@@ -836,16 +999,17 @@ class SMSReceiver : BroadcastReceiver() {
     }
 }
 
-
-
-
-
-
-
-
-
-
-
+/**
+ * Резервное срабатывание отправки пакета. Нужен отдельный не экспортируемый приёмник:
+ * SMSReceiver защищён разрешением BROADCAST_SMS, и своё же сообщение от будильника ему не пройти.
+ */
+class BatchAlarmReceiver : BroadcastReceiver() {
+    override fun onReceive(context: Context, intent: Intent?) {
+        if (intent?.action == SMSReceiver.ACTION_FLUSH_BATCH) {
+            SMSReceiver().flushFromAlarm(context)
+        }
+    }
+}
 
 //package com.semenenko.smstomax
 //

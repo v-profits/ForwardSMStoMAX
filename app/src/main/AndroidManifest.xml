@@ -52,6 +52,11 @@
             </intent-filter>
         </receiver>
 
+        <!-- Резервный будильник закрытия окна объединения SMS (не экспортируется) -->
+        <receiver
+            android:name=".sms.BatchAlarmReceiver"
+            android:exported="false" />
+
 
         <activity
             android:name=".ui.SettingsActivity"
