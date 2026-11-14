@@ -119,6 +119,9 @@ class SMSReceiver : BroadcastReceiver() {
         private val pollWorker = Executors.newSingleThreadExecutor()
         private val batchRefs = ConcurrentHashMap<Long, String>() // id записи очереди -> код сообщения в журнале
         private var batchWakeLock: PowerManager.WakeLock? = null
+        // Записи очереди, которые прямо сейчас отправляются (пакетом или фоновой очередью).
+        // Не даёт двум потокам отправить одну и ту же запись дважды.
+        private val inFlight: MutableSet<Long> = ConcurrentHashMap.newKeySet()
 
         internal data class Destination(val chatId: String, val idInstance: String, val apiToken: String)
 
@@ -431,6 +434,7 @@ class SMSReceiver : BroadcastReceiver() {
     /** Вызывается из BatchAlarmReceiver, когда штатный таймер не успел. Безопасно вызывать повторно. */
     fun flushFromAlarm(context: Context) {
         val app = context.applicationContext
+        if (batchFlushRunnable == null && DatabaseHelper(app).getAllQueuedMessages().isEmpty()) return // отправлять нечего
         val timer = batchFlushRunnable
         if (timer != null) {
             handler.removeCallbacks(timer)
@@ -470,7 +474,8 @@ class SMSReceiver : BroadcastReceiver() {
             waited++
         }
 
-        val queued = dbHelper.getAllQueuedMessages()
+        val queued = dbHelper.getAllQueuedMessages().filter { inFlight.add(it.id) }
+        try {
         if (queued.isNotEmpty()) {
             val now = System.currentTimeMillis()
             val groups = queued.groupBy { Destination(it.chatId, it.idInstance, it.apiToken) }
@@ -485,6 +490,9 @@ class SMSReceiver : BroadcastReceiver() {
                 }
                 sendEntries(context, dbHelper, dest, entries)
             }
+        }
+        } finally {
+            queued.forEach { inFlight.remove(it.id) }
         }
 
         // Остальную очередь проверяем через минуту
@@ -530,7 +538,7 @@ class SMSReceiver : BroadcastReceiver() {
                             AppLog.i(
                                 context, "ОТПРАВКА",
                                 "Принято GREEN-API (idMessage ${result.idMessage}), чат ${dest.chatId}, в пакете сообщений: ${chunk.size}" +
-                                        (if (e.queued != null) " [из очереди]" else ""),
+                                        (if (e.text.startsWith("🔄")) " [из очереди]" else ""),
                                 e.ref, e.sender
                             )
                             e.queued?.let { dbHelper.removeMessageFromQueue(it.id); batchRefs.remove(it.id) }
@@ -916,7 +924,7 @@ class SMSReceiver : BroadcastReceiver() {
         val dbHelper = DatabaseHelper(context)
         val nowMs = System.currentTimeMillis()
         // Свежие записи (только что принятые SMS) отправит пакет — фоновая очередь их не трогает
-        val pendingMessages = dbHelper.getAllQueuedMessages().filter { nowMs - it.createdAt > QUEUE_SKIP_YOUNG_MS }
+        val pendingMessages = dbHelper.getAllQueuedMessages().filter { nowMs - it.createdAt > QUEUE_SKIP_YOUNG_MS && inFlight.add(it.id) }
 
         if (pendingMessages.isEmpty()) {
             Log.d(TAG, "📭 Очередь пуста, обработчик останавливается")
@@ -988,6 +996,7 @@ class SMSReceiver : BroadcastReceiver() {
                 }
             }
 
+            pendingMessages.forEach { inFlight.remove(it.id) }
             queueCheckRunnable = Runnable {
                 isProcessingQueue = false
                 processQueue(context)
